@@ -4,6 +4,13 @@ import { Search, Plus, Filter, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
 import FilterDropdown from "@/components/FilterDropdown";
@@ -206,13 +213,21 @@ const Index = () => {
           </div>
         )}
 
-        {/* 프롬프트 등록 모달 */}
-        {showRegistration && (
-          <PromptRegistration
-            onSubmit={handlePromptSubmit}
-            onClose={() => setShowRegistration(false)}
-          />
-        )}
+        {/* 프롬프트 등록 사이드패널 */}
+        <Sheet open={showRegistration} onOpenChange={setShowRegistration}>
+          <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>새 프롬프트 등록</SheetTitle>
+              <SheetDescription>
+                팀에서 공유할 프롬프트를 등록해주세요
+              </SheetDescription>
+            </SheetHeader>
+            <PromptRegistration
+              onSubmit={handlePromptSubmit}
+              onClose={() => setShowRegistration(false)}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
