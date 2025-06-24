@@ -1,19 +1,12 @@
-
 import { useState, useEffect } from "react";
-import { Search, Plus, Filter, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
-import FilterDropdown from "@/components/FilterDropdown";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface Prompt {
   id: string;
@@ -22,213 +15,250 @@ interface Prompt {
   type: string;
   description: string;
   content: string;
+  result?: string;
+  likes: number;
   createdAt: Date;
 }
 
-const SAMPLE_PROMPTS: Prompt[] = [
-  {
-    id: "1",
-    title: "회의록 작성 도우미",
-    role: "기획자",
-    type: "작성",
-    description: "회의 내용을 체계적이고 명확한 회의록으로 정리해주는 프롬프트",
-    content: "다음 회의 내용을 바탕으로 체계적인 회의록을 작성해주세요.\n\n[회의 정보]\n- 회의명: \n- 일시: \n- 참석자: \n- 안건: \n\n[회의 내용]\n(여기에 회의 내용 입력)\n\n다음 형식으로 정리해주세요:\n1. 주요 논의사항\n2. 결정사항\n3. 액션 아이템 (담당자, 마감일 포함)\n4. 다음 회의 일정",
-    createdAt: new Date()
-  },
-  {
-    id: "2", 
-    title: "데이터 분석 보고서 요약",
-    role: "분석가",
-    type: "요약",
-    description: "복잡한 데이터 분석 결과를 핵심 인사이트 중심으로 요약하는 프롬프트",
-    content: "다음 데이터 분석 결과를 경영진이 이해하기 쉽도록 요약해주세요.\n\n[분석 데이터]\n(여기에 분석 데이터 입력)\n\n다음 구조로 요약해주세요:\n1. 핵심 인사이트 (3가지 이내)\n2. 주요 수치 및 트렌드\n3. 비즈니스 임팩트\n4. 권장 액션\n\n• 전문 용어는 쉽게 풀어서 설명\n• 시각적 요소(차트, 그래프) 활용 제안\n• 1페이지 분량으로 간결하게 작성",
-    createdAt: new Date()
-  },
-  {
-    id: "3",
-    title: "고객 피드백 분석",
-    role: "마케터",
-    type: "분석",
-    description: "고객 피드백을 체계적으로 분류하고 개선 방안을 도출하는 프롬프트",
-    content: "다음 고객 피드백을 분석하여 개선 방안을 제시해주세요.\n\n[고객 피드백 데이터]\n(여기에 피드백 내용 입력)\n\n분석 요청사항:\n1. 피드백 카테고리별 분류 (서비스, 제품, 가격, 지원 등)\n2. 긍정/부정 피드백 비율\n3. 주요 불만사항 TOP 5\n4. 개선 우선순위 및 구체적 액션 플랜\n5. 긍정적 피드백에서 발견한 강점\n\n결과는 표 형태로 정리하고, 각 개선방안에 대한 예상 효과와 소요 리소스를 포함해주세요.",
-    createdAt: new Date()
-  }
-];
-
 const Index = () => {
-  const [prompts, setPrompts] = useState<Prompt[]>(SAMPLE_PROMPTS);
-  const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>(SAMPLE_PROMPTS);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState("전체");
-  const [selectedType, setSelectedType] = useState("전체");
-  const [showRegistration, setShowRegistration] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // 다크모드 토글
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+  const [prompts, setPrompts] = useState<Prompt[]>([
+    {
+      id: "1",
+      title: "회의록 요약 프롬프트",
+      role: "기획자",
+      type: "요약",
+      description: "긴 회의록을 핵심 내용 중심으로 간결하게 요약해주는 프롬프트",
+      content: `다음 회의록을 읽고 핵심 내용을 3개 섹션으로 요약해주세요:
 
-  // 검색 및 필터링
-  useEffect(() => {
-    let filtered = prompts;
+1. 주요 결정사항
+2. 액션 아이템 (담당자별)
+3. 다음 회의 안건
 
-    // 검색어 필터링
-    if (searchTerm) {
-      filtered = filtered.filter(prompt => 
-        prompt.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prompt.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prompt.content.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+회의록:
+[여기에 회의록 붙여넣기]`,
+      result: `주요 결정사항:
+- 신제품 출시일을 3월 15일로 확정
+- 마케팅 예산 20% 증액 승인
 
-    // 역할 필터링
-    if (selectedRole !== "전체") {
-      filtered = filtered.filter(prompt => prompt.role === selectedRole);
-    }
+액션 아이템:
+- 김과장: 제품 사양서 최종 검토 (2/28까지)  
+- 이대리: 마케팅 캠페인 기획안 작성 (3/5까지)
 
-    // 유형 필터링
-    if (selectedType !== "전체") {
-      filtered = filtered.filter(prompt => prompt.type === selectedType);
-    }
+다음 회의 안건:
+- 제품 런칭 이벤트 계획 검토
+- Q1 매출 목표 재설정`,
+      likes: 12,
+      createdAt: new Date('2024-01-15'),
+    },
+    {
+      id: "2", 
+      title: "보고서 작성 프롬프트",
+      role: "분석가",
+      type: "작성",
+      description: "데이터를 바탕으로 체계적인 분석 보고서를 작성하는 프롬프트",
+      content: `다음 구조로 분석 보고서를 작성해주세요:
 
-    setFilteredPrompts(filtered);
-  }, [prompts, searchTerm, selectedRole, selectedType]);
+## 개요
+- 분석 목적
+- 데이터 범위
+- 주요 발견사항 요약
 
-  const handlePromptCopy = (content: string, title: string) => {
+## 상세 분석
+- 핵심 지표 분석
+- 트렌드 분석
+- 문제점 및 기회요인
+
+## 결론 및 제언
+- 핵심 인사이트
+- 실행 가능한 제언사항
+
+데이터: [여기에 분석할 데이터 붙여넣기]`,
+      result: `## 개요
+분석 목적: 고객 이탈률 감소 방안 도출
+데이터 범위: 2023년 1-12월 고객 데이터
+주요 발견사항: 신규 고객 이탈률 35% → 기존 고객 대비 3배 높음
+
+## 상세 분석  
+핵심 지표: 첫 구매 후 30일 이내 이탈률이 가장 높음
+트렌드: 모바일 앱 사용자의 이탈률이 웹 사용자보다 낮음
+기회요인: 개인화 추천 서비스 이용 고객의 재구매율 60% 향상
+
+## 결론 및 제언
+핵심 인사이트: 초기 고객 경험이 이탈률에 결정적 영향
+제언사항: 신규 고객 온보딩 프로그램 및 개인화 서비스 확대`,
+      likes: 8,
+      createdAt: new Date('2024-01-20'),
+    },
+    {
+      id: "3",
+      title: "경쟁사 분석 프롬프트", 
+      role: "마케터",
+      type: "분석",
+      description: "경쟁사의 마케팅 전략과 제품을 체계적으로 분석하는 프롬프트",
+      content: `경쟁사 [회사명]에 대해 다음 항목별로 분석해주세요:
+
+## 기업 개요
+- 설립연도, 규모, 주요 사업영역
+- 최근 3년 매출 및 성장률
+
+## 제품/서비스 분석  
+- 주력 제품/서비스 특징
+- 가격 정책 및 포지셔닝
+- 우리 제품과의 차별점
+
+## 마케팅 전략
+- 주요 마케팅 채널 및 메시지
+- 타겟 고객층
+- 최근 캠페인 성과
+
+## SWOT 분석
+- 강점/약점/기회/위협 요인
+
+## 시사점
+- 우리가 참고할 점
+- 대응 전략 제안`,
+      likes: 15,
+      createdAt: new Date('2024-01-25'),
+    },
+  ]);
+
+  const handleCopy = (content: string, title: string) => {
     navigator.clipboard.writeText(content);
     toast({
-      title: "프롬프트 복사됨!",
-      description: `"${title}" 프롬프트가 클립보드에 복사되었습니다.`,
-      duration: 2000,
+      title: `${title} 내용이 복사되었습니다.`,
     });
   };
 
-  const handlePromptSubmit = (newPrompt: Omit<Prompt, 'id' | 'createdAt'>) => {
-    const prompt: Prompt = {
-      ...newPrompt,
+  const handleLike = (promptId: string) => {
+    setPrompts(prevPrompts => 
+      prevPrompts.map(prompt =>
+        prompt.id === promptId 
+          ? { ...prompt, likes: prompt.likes + 1 }
+          : prompt
+      )
+    );
+  };
+
+  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes'>) => {
+    const newPrompt: Prompt = {
+      ...newPromptData,
       id: Date.now().toString(),
-      createdAt: new Date()
+      likes: 0,
+      createdAt: new Date(),
     };
-    setPrompts(prev => [prompt, ...prev]);
-    setShowRegistration(false);
-    toast({
-      title: "프롬프트 등록 완료!",
-      description: "새로운 프롬프트가 성공적으로 등록되었습니다.",
-      duration: 2000,
-    });
+    setPrompts(prev => [newPrompt, ...prev]);
   };
 
-  const roles = ["전체", ...Array.from(new Set(prompts.map(p => p.role)))];
-  const types = ["전체", ...Array.from(new Set(prompts.map(p => p.type)))];
+  const filteredPrompts = prompts.filter(prompt => {
+    const searchRegex = new RegExp(searchQuery, 'i');
+    const matchesSearch = searchRegex.test(prompt.title) || searchRegex.test(prompt.description) || searchRegex.test(prompt.content);
+
+    const matchesRole = selectedRole ? prompt.role === selectedRole : true;
+    const matchesType = selectedType ? prompt.type === selectedType : true;
+
+    return matchesSearch && matchesRole && matchesType;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              HS본부 프롬프트 라이브러리
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
-              검증된 프롬프트를 빠르게 찾고 복사해 바로 활용하세요
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <header className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
+          나만의 ChatGPT 프롬프트
+        </h1>
+        <p className="text-center text-gray-600 dark:text-gray-300 mt-2">
+          나만의 ChatGPT 프롬프트를 만들고 공유하세요!
+        </p>
+      </header>
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <Input
+              type="search"
+              placeholder="프롬프트 검색..."
+              className="w-full md:w-64 lg:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+
+            <Select onValueChange={value => setSelectedRole(value === "all" ? null : value)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="역할 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">모든 역할</SelectItem>
+                <SelectItem value="기획자">기획자</SelectItem>
+                <SelectItem value="마케터">마케터</SelectItem>
+                <SelectItem value="개발자">개발자</SelectItem>
+                <SelectItem value="디자이너">디자이너</SelectItem>
+                <SelectItem value="분석가">분석가</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select onValueChange={value => setSelectedType(value === "all" ? null : value)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="타입 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">모든 타입</SelectItem>
+                <SelectItem value="요약">요약</SelectItem>
+                <SelectItem value="번역">번역</SelectItem>
+                <SelectItem value="작성">작성</SelectItem>
+                <SelectItem value="분석">분석</SelectItem>
+                <SelectItem value="생성">생성</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2"
-            >
-              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <Button 
-              onClick={() => setShowRegistration(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              프롬프트 등록
-            </Button>
-          </div>
+
+          <Button onClick={() => setIsRegistrationOpen(true)}>
+            새 프롬프트 등록
+          </Button>
         </div>
 
-        {/* 검색 및 필터 */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="프롬프트 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-300 dark:border-gray-600"
-              />
-            </div>
-            <div className="flex gap-3">
-              <FilterDropdown
-                label="역할"
-                options={roles}
-                value={selectedRole}
-                onChange={setSelectedRole}
-              />
-              <FilterDropdown
-                label="유형"
-                options={types}
-                value={selectedType}
-                onChange={setSelectedType}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 프롬프트 카드 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredPrompts.map((prompt) => (
             <PromptCard
               key={prompt.id}
               prompt={prompt}
-              onCopy={handlePromptCopy}
+              onCopy={handleCopy}
+              onLike={handleLike}
             />
           ))}
         </div>
 
         {filteredPrompts.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-gray-400 dark:text-gray-500 text-lg mb-4">
-              검색 조건에 맞는 프롬프트가 없습니다
-            </div>
-            <Button 
-              onClick={() => setShowRegistration(true)}
-              variant="outline"
-            >
-              새 프롬프트 등록하기
-            </Button>
+          <div className="text-center mt-8">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              검색 결과가 없습니다.
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
+              다른 검색어를 사용하거나 필터를 조정해보세요.
+            </p>
           </div>
         )}
+      </main>
 
-        {/* 프롬프트 등록 사이드패널 */}
-        <Sheet open={showRegistration} onOpenChange={setShowRegistration}>
-          <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>새 프롬프트 등록</SheetTitle>
-              <SheetDescription>
-                팀에서 공유할 프롬프트를 등록해주세요
-              </SheetDescription>
-            </SheetHeader>
-            <PromptRegistration
-              onSubmit={handlePromptSubmit}
-              onClose={() => setShowRegistration(false)}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
+      {isRegistrationOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                프롬프트 등록
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setIsRegistrationOpen(false)}>
+                닫기
+              </Button>
+            </div>
+            <PromptRegistration onSubmit={addPrompt} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
