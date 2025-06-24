@@ -40,7 +40,7 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
   };
 
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:scale-[1.02] hover:border-blue-300 dark:hover:border-blue-600">
+    <Card className="group hover:shadow-xl transition-all duration-300 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:scale-[1.02] hover:border-blue-300 dark:hover:border-blue-600 flex flex-col h-full">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -75,40 +75,16 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="pt-0 space-y-4">
-        <Collapsible open={isContentOpen} onOpenChange={setIsContentOpen}>
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
-            >
-              프롬프트 내용 보기
-              {isContentOpen ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent className="mt-3">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
-                {prompt.content}
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {prompt.result && (
-          <Collapsible open={isResultOpen} onOpenChange={setIsResultOpen}>
+      <CardContent className="pt-0 space-y-4 flex-1 flex flex-col">
+        <div className="flex-1 space-y-4">
+          <Collapsible open={isContentOpen} onOpenChange={setIsContentOpen}>
             <CollapsibleTrigger asChild>
               <Button
                 variant="outline"
                 className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
               >
-                프롬프트 결과 보기
-                {isResultOpen ? (
+                프롬프트 내용 보기
+                {isContentOpen ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
                   <ChevronDown className="w-4 h-4" />
@@ -117,16 +93,42 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
             </CollapsibleTrigger>
             
             <CollapsibleContent className="mt-3">
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <div className="text-sm text-green-800 dark:text-green-200 leading-relaxed whitespace-pre-wrap">
-                  {prompt.result}
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
+                  {prompt.content}
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
-        )}
+
+          {prompt.result && (
+            <Collapsible open={isResultOpen} onOpenChange={setIsResultOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  프롬프트 결과 보기
+                  {isResultOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="mt-3">
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                  <div className="text-sm text-green-800 dark:text-green-200 leading-relaxed whitespace-pre-wrap">
+                    {prompt.result}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto pt-4">
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {prompt.createdAt.toLocaleDateString('ko-KR')}
           </span>
@@ -147,7 +149,7 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
             ) : (
               <>
                 <Copy className="w-5 h-5 mr-2" />
-                복사
+                프롬프트 복사
               </>
             )}
           </Button>
