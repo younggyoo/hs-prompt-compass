@@ -1,9 +1,10 @@
 
 import { useState } from "react";
-import { Copy, CheckCircle } from "lucide-react";
+import { Copy, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Prompt {
   id: string;
@@ -21,18 +22,14 @@ interface PromptCardProps {
 }
 
 const PromptCard = ({ prompt, onCopy }: PromptCardProps) => {
-  const [showFullContent, setShowFullContent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleCopy = () => {
     onCopy(prompt.content, prompt.title);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const truncatedContent = prompt.content.length > 150 
-    ? prompt.content.substring(0, 150) + "..."
-    : prompt.content;
 
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:scale-[1.02] hover:border-blue-300 dark:hover:border-blue-600">
@@ -58,19 +55,29 @@ const PromptCard = ({ prompt, onCopy }: PromptCardProps) => {
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-600">
-          <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
-            {showFullContent ? prompt.content : truncatedContent}
-          </div>
-          {prompt.content.length > 150 && (
-            <button
-              onClick={() => setShowFullContent(!showFullContent)}
-              className="text-blue-600 dark:text-blue-400 text-sm mt-2 hover:underline"
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full mb-4 justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
             >
-              {showFullContent ? "접기" : "더보기"}
-            </button>
-          )}
-        </div>
+              프롬프트 내용 보기
+              {isOpen ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="space-y-4">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
+                {prompt.content}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
         
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500 dark:text-gray-400">
