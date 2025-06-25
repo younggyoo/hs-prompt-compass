@@ -100,6 +100,6 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    font-family: 'LG스마트체 Regular', 'Malgun Gothic', '맑은 고딕', sans-serif;
   }
 }

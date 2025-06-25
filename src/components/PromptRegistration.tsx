@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,9 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [result, setResult] = useState("");
+  
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const resultTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +50,26 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
     setDescription("");
     setContent("");
     setResult("");
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>, setter: (value: string) => void) => {
+    const items = e.clipboardData.items;
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const imageData = event.target?.result as string;
+            setter(prev => prev + `\n[이미지: ${blob.name || 'pasted-image'}]\n${imageData}\n`);
+          };
+          reader.readAsDataURL(blob);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
   };
 
   return (
@@ -128,13 +151,15 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
 
         <div className="space-y-2 flex-1">
           <Label htmlFor="content" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            📄 프롬프트 내용
+            📄 프롬프트 내용 <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
           </Label>
           <Textarea
+            ref={contentTextareaRef}
             id="content"
-            placeholder="프롬프트 내용을 입력해주세요"
+            placeholder="프롬프트 내용을 입력해주세요 (Ctrl+V로 이미지도 붙여넣을 수 있습니다)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onPaste={(e) => handlePaste(e, setContent)}
             className="min-h-[100px] resize-none flex-1"
             required
           />
@@ -142,20 +167,22 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="result" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            ✨ 프롬프트 결과 (선택사항)
+            ✨ 프롬프트 결과 (선택사항) <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
           </Label>
           <Textarea
+            ref={resultTextareaRef}
             id="result"
-            placeholder="이 프롬프트를 사용했을 때의 예상 결과나 실제 결과를 입력해주세요..."
+            placeholder="이 프롬프트를 사용했을 때의 예상 결과나 실제 결과를 입력해주세요... (Ctrl+V로 이미지도 붙여넣을 수 있습니다)"
             value={result}
             onChange={(e) => setResult(e.target.value)}
+            onPaste={(e) => handlePaste(e, setResult)}
             className="min-h-[80px] resize-none"
           />
         </div>
 
         <Button 
           type="submit" 
-          className="w-full bg-gradient-to-r from-[#A50034] to-[#8B002B] hover:from-[#8B002B] hover:to-[#730024] text-white shadow-lg hover:shadow-xl mt-auto"
+          className="w-full bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl mt-auto"
         >
           ✅ 등록하기
         </Button>

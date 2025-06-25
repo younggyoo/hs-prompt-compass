@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
@@ -28,7 +27,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("전체");
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortBy, setSortBy] = useState<string>("likes");
   const { toast } = useToast();
 
   const [prompts, setPrompts] = useState<Prompt[]>([
@@ -819,13 +818,13 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
 
-              <Select onValueChange={setSortBy} defaultValue="createdAt">
+              <Select onValueChange={setSortBy} defaultValue="likes">
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="📈 정렬 기준" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="createdAt">🕐 생성일순</SelectItem>
                   <SelectItem value="likes">👍 좋아요순</SelectItem>
+                  <SelectItem value="createdAt">🕐 생성일순</SelectItem>
                   <SelectItem value="views">👁️ 조회수순</SelectItem>
                 </SelectContent>
               </Select>
@@ -848,12 +847,12 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
             <Sheet open={isRegistrationOpen} onOpenChange={setIsRegistrationOpen}>
               <SheetTrigger asChild>
                 <Button 
-                  className="bg-gradient-to-r from-[#A50034] to-[#8B002B] hover:from-[#8B002B] hover:to-[#730024] text-white shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
                 >
                   ➕ 새 프롬프트 등록
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+              <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-white/95 backdrop-blur-sm">
                 <SheetHeader>
                   <SheetTitle>📝 새 프롬프트 등록</SheetTitle>
                 </SheetHeader>
