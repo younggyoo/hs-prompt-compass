@@ -5,9 +5,9 @@ import PromptRegistration from "@/components/PromptRegistration";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 
 interface Prompt {
@@ -34,8 +34,8 @@ const Index = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([
     {
       id: "1",
-      title: "회의록 요약 프롬프트",
-      role: "기획자",
+      title: "📝 회의록 요약 프롬프트",
+      role: "기획",
       type: "요약",
       description: "긴 회의록을 핵심 내용 중심으로 간결하게 요약해주는 프롬프트",
       content: `다음 회의록을 읽고 핵심 내용을 3개 섹션으로 요약해주세요:
@@ -63,8 +63,8 @@ const Index = () => {
     },
     {
       id: "2", 
-      title: "보고서 작성 프롬프트",
-      role: "분석가",
+      title: "📊 보고서 작성 프롬프트",
+      role: "R&D",
       type: "작성",
       description: "데이터를 바탕으로 체계적인 분석 보고서를 작성하는 프롬프트",
       content: `다음 구조로 분석 보고서를 작성해주세요:
@@ -103,8 +103,8 @@ const Index = () => {
     },
     {
       id: "3",
-      title: "경쟁사 분석 프롬프트", 
-      role: "마케터",
+      title: "🔍 경쟁사 분석 프롬프트", 
+      role: "영업/마케팅",
       type: "분석",
       description: "경쟁사의 마케팅 전략과 제품을 체계적으로 분석하는 프롬프트",
       content: `경쟁사 [회사명]에 대해 다음 항목별로 분석해주세요:
@@ -161,9 +161,10 @@ const Index = () => {
       createdAt: new Date(),
     };
     setPrompts(prev => [newPrompt, ...prev]);
+    setIsRegistrationOpen(false);
   };
 
-  const roles = ["전체", "기획자", "마케터", "개발자", "디자이너", "분석가"];
+  const roles = ["전체", "R&D", "기획", "구매", "생산", "SCM", "품질", "영업/마케팅", "공통"];
 
   const filteredAndSortedPrompts = prompts
     .filter(prompt => {
@@ -189,11 +190,11 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
-          HS본부 프롬프트 라이브러리
+          🏢 HS본부 프롬프트 라이브러리
         </h1>
         <p className="text-center text-gray-600 dark:text-gray-300 mt-2 max-w-2xl mx-auto">
-          업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
-          검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
+          💡 업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
+          ✨ 검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
         </p>
       </header>
       
@@ -203,7 +204,7 @@ const Index = () => {
             <div className="flex flex-col md:flex-row items-center gap-4 flex-1">
               <Input
                 type="search"
-                placeholder="프롬프트 검색..."
+                placeholder="🔍 프롬프트 검색..."
                 className="w-full md:w-64 lg:w-80"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -211,18 +212,18 @@ const Index = () => {
 
               <Select onValueChange={setSortBy} defaultValue="createdAt">
                 <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="정렬 기준" />
+                  <SelectValue placeholder="📈 정렬 기준" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="createdAt">생성일순</SelectItem>
-                  <SelectItem value="likes">좋아요순</SelectItem>
-                  <SelectItem value="views">조회수순</SelectItem>
+                  <SelectItem value="createdAt">🕐 생성일순</SelectItem>
+                  <SelectItem value="likes">👍 좋아요순</SelectItem>
+                  <SelectItem value="views">👁️ 조회수순</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select onValueChange={value => setSelectedType(value === "all" ? null : value)}>
                 <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="타입 선택" />
+                  <SelectValue placeholder="🏷️ 타입 선택" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">모든 타입</SelectItem>
@@ -235,16 +236,24 @@ const Index = () => {
               </Select>
             </div>
 
-            <Button 
-              onClick={() => setIsRegistrationOpen(true)}
-              className="bg-[#A50034] hover:bg-[#8B002B] text-white"
-            >
-              새 프롬프트 등록
-            </Button>
+            <Sheet open={isRegistrationOpen} onOpenChange={setIsRegistrationOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  className="bg-[#A50034] hover:bg-[#8B002B] text-white"
+                >
+                  ➕ 새 프롬프트 등록
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                <SheetHeader>
+                  <SheetTitle>📝 새 프롬프트 등록</SheetTitle>
+                </SheetHeader>
+                <PromptRegistration onSubmit={addPrompt} />
+              </SheetContent>
+            </Sheet>
           </div>
 
           <div className="flex flex-col gap-3">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">역할별 필터</Label>
             <ToggleGroup 
               type="single" 
               value={selectedRole} 
@@ -279,7 +288,7 @@ const Index = () => {
         {filteredAndSortedPrompts.length === 0 && (
           <div className="text-center mt-8">
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              검색 결과가 없습니다.
+              😔 검색 결과가 없습니다.
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
               다른 검색어를 사용하거나 필터를 조정해보세요.
@@ -287,22 +296,6 @@ const Index = () => {
           </div>
         )}
       </main>
-
-      {isRegistrationOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl">
-            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                프롬프트 등록
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => setIsRegistrationOpen(false)}>
-                닫기
-              </Button>
-            </div>
-            <PromptRegistration onSubmit={addPrompt} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

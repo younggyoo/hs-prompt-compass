@@ -45,10 +45,10 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1">
               {prompt.title}
             </CardTitle>
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-2">
               <Badge variant="secondary" className="bg-[#A50034]/10 dark:bg-[#A50034]/20 text-[#A50034] dark:text-[#A50034]">
                 {prompt.role}
               </Badge>
@@ -56,22 +56,22 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
                 {prompt.type}
               </Badge>
             </div>
-          </div>
-          <div className="flex items-center gap-1 ml-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              className="text-gray-500 hover:text-[#A50034] dark:text-gray-400 dark:hover:text-[#A50034] hover:bg-[#A50034]/10 dark:hover:bg-[#A50034]/20"
-            >
-              <ThumbsUp className="w-4 h-4" />
-            </Button>
-            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              {prompt.likes}
-            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                className="text-gray-500 hover:text-[#A50034] dark:text-gray-400 dark:hover:text-[#A50034] hover:bg-[#A50034]/10 dark:hover:bg-[#A50034]/20 p-1 h-auto"
+              >
+                <ThumbsUp className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">
+                  {prompt.likes}
+                </span>
+              </Button>
+            </div>
           </div>
         </div>
-        <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed">
+        <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
           {prompt.description}
         </CardDescription>
       </CardHeader>
@@ -82,9 +82,9 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
             <CollapsibleTrigger asChild>
               <Button
                 variant="outline"
-                className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
+                className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-200"
               >
-                프롬프트 내용 보기
+                📄 프롬프트 내용 보기
                 {isContentOpen ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
@@ -93,8 +93,8 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
               </Button>
             </CollapsibleTrigger>
             
-            <CollapsibleContent className="mt-3">
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <CollapsibleContent className="mt-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
                 <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
                   {prompt.content}
                 </div>
@@ -107,9 +107,9 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700"
+                  className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-200"
                 >
-                  프롬프트 결과 보기
+                  ✨ 프롬프트 결과 보기
                   {isResultOpen ? (
                     <ChevronUp className="w-4 h-4" />
                   ) : (
@@ -118,8 +118,8 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
                 </Button>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="mt-3">
-                <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
+              <CollapsibleContent className="mt-3 animate-in slide-in-from-top-2 duration-300">
+                <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30 shadow-sm">
                   <div className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap">
                     {prompt.result}
                   </div>
@@ -131,7 +131,7 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
         
         <div className="flex items-center justify-between mt-auto pt-4">
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {prompt.createdAt.toLocaleDateString('ko-KR')}
+            📅 {prompt.createdAt.toLocaleDateString('ko-KR')}
           </span>
           <Button
             onClick={handleCopy}
@@ -145,12 +145,12 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
             {copied ? (
               <>
                 <CheckCircle className="w-5 h-5 mr-2" />
-                복사됨!
+                📋 복사됨!
               </>
             ) : (
               <>
                 <Copy className="w-5 h-5 mr-2" />
-                프롬프트 복사
+                📋 프롬프트 복사
               </>
             )}
           </Button>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ interface PromptRegistrationProps {
 
 const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
   const [title, setTitle] = useState("");
-  const [role, setRole] = useState("기획자");
+  const [role, setRole] = useState("기획");
   const [type, setType] = useState("아이디어");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
@@ -41,7 +42,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
     });
 
     setTitle("");
-    setRole("기획자");
+    setRole("기획");
     setType("아이디어");
     setDescription("");
     setContent("");
@@ -49,20 +50,17 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 h-full">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          새 프롬프트 등록
-        </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          새로운 프롬프트를 등록하고 공유해보세요!
+          ✨ 새로운 프롬프트를 등록하고 공유해보세요!
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col h-full">
         <div className="space-y-2">
           <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            제목
+            📝 제목
           </Label>
           <Input
             id="title"
@@ -73,28 +71,31 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="role" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              역할
+              👤 역할
             </Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="역할 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="기획자">기획자</SelectItem>
-                <SelectItem value="마케터">마케터</SelectItem>
-                <SelectItem value="개발자">개발자</SelectItem>
-                <SelectItem value="디자이너">디자이너</SelectItem>
-                <SelectItem value="CEO">CEO</SelectItem>
+                <SelectItem value="R&D">R&D</SelectItem>
+                <SelectItem value="기획">기획</SelectItem>
+                <SelectItem value="구매">구매</SelectItem>
+                <SelectItem value="생산">생산</SelectItem>
+                <SelectItem value="SCM">SCM</SelectItem>
+                <SelectItem value="품질">품질</SelectItem>
+                <SelectItem value="영업/마케팅">영업/마케팅</SelectItem>
+                <SelectItem value="공통">공통</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="type" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              타입
+              🏷️ 타입
             </Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger className="w-full">
@@ -114,7 +115,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            설명
+            💬 설명
           </Label>
           <Input
             id="description"
@@ -125,35 +126,38 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 flex-1">
           <Label htmlFor="content" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            프롬프트 내용
+            📄 프롬프트 내용
           </Label>
           <Textarea
             id="content"
             placeholder="프롬프트 내용을 입력해주세요"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px] resize-none"
+            className="min-h-[100px] resize-none flex-1"
             required
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="result" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            프롬프트 결과 (선택사항)
+            ✨ 프롬프트 결과 (선택사항)
           </Label>
           <Textarea
             id="result"
             placeholder="이 프롬프트를 사용했을 때의 예상 결과나 실제 결과를 입력해주세요..."
             value={result}
             onChange={(e) => setResult(e.target.value)}
-            className="min-h-[120px] resize-none"
+            className="min-h-[80px] resize-none"
           />
         </div>
 
-        <Button type="submit" className="w-full">
-          등록하기
+        <Button 
+          type="submit" 
+          className="w-full bg-[#A50034] hover:bg-[#8B002B] text-white mt-auto"
+        >
+          ✅ 등록하기
         </Button>
       </form>
     </div>
