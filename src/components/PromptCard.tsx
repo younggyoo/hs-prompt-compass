@@ -129,17 +129,14 @@ const PromptCard = ({ prompt, onCopy, onLike }: PromptCardProps) => {
           )}
         </div>
         
-        <div className="flex items-center justify-between mt-auto pt-4">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            📅 {prompt.createdAt.toLocaleDateString('ko-KR')}
-          </span>
+        <div className="flex items-center justify-end mt-auto pt-4">
           <Button
             onClick={handleCopy}
             size="lg"
             className={`transition-all duration-200 px-6 py-3 text-base font-semibold ${
               copied 
-                ? "bg-green-600 hover:bg-green-700 text-white" 
-                : "bg-[#A50034] hover:bg-[#8B002B] text-white shadow-lg hover:shadow-xl"
+                ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white" 
+                : "bg-gradient-to-r from-[#A50034] to-[#8B002B] hover:from-[#8B002B] hover:to-[#730024] text-white shadow-lg hover:shadow-xl"
             }`}
           >
             {copied ? (

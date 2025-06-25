@@ -155,7 +155,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-[#A50034] hover:bg-[#8B002B] text-white mt-auto"
+          className="w-full bg-gradient-to-r from-[#A50034] to-[#8B002B] hover:from-[#8B002B] hover:to-[#730024] text-white shadow-lg hover:shadow-xl mt-auto"
         >
           ✅ 등록하기
         </Button>
