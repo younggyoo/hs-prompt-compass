@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
 
 interface Prompt {
@@ -17,14 +19,16 @@ interface Prompt {
   content: string;
   result?: string;
   likes: number;
+  views: number;
   createdAt: Date;
 }
 
 const Index = () => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>("전체");
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("createdAt");
   const { toast } = useToast();
 
   const [prompts, setPrompts] = useState<Prompt[]>([
@@ -54,6 +58,7 @@ const Index = () => {
 - 제품 런칭 이벤트 계획 검토
 - Q1 매출 목표 재설정`,
       likes: 12,
+      views: 45,
       createdAt: new Date('2024-01-15'),
     },
     {
@@ -93,6 +98,7 @@ const Index = () => {
 핵심 인사이트: 초기 고객 경험이 이탈률에 결정적 영향
 제언사항: 신규 고객 온보딩 프로그램 및 개인화 서비스 확대`,
       likes: 8,
+      views: 32,
       createdAt: new Date('2024-01-20'),
     },
     {
@@ -124,6 +130,7 @@ const Index = () => {
 - 우리가 참고할 점
 - 대응 전략 제안`,
       likes: 15,
+      views: 78,
       createdAt: new Date('2024-01-25'),
     },
   ]);
@@ -145,84 +152,121 @@ const Index = () => {
     );
   };
 
-  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes'>) => {
+  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views'>) => {
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
       likes: 0,
+      views: 0,
       createdAt: new Date(),
     };
     setPrompts(prev => [newPrompt, ...prev]);
   };
 
-  const filteredPrompts = prompts.filter(prompt => {
-    const searchRegex = new RegExp(searchQuery, 'i');
-    const matchesSearch = searchRegex.test(prompt.title) || searchRegex.test(prompt.description) || searchRegex.test(prompt.content);
+  const roles = ["전체", "기획자", "마케터", "개발자", "디자이너", "분석가"];
 
-    const matchesRole = selectedRole ? prompt.role === selectedRole : true;
-    const matchesType = selectedType ? prompt.type === selectedType : true;
-
-    return matchesSearch && matchesRole && matchesType;
-  });
+  const filteredAndSortedPrompts = prompts
+    .filter(prompt => {
+      const searchRegex = new RegExp(searchQuery, 'i');
+      const matchesSearch = searchRegex.test(prompt.title) || searchRegex.test(prompt.description) || searchRegex.test(prompt.content);
+      const matchesRole = selectedRole === "전체" || prompt.role === selectedRole;
+      const matchesType = selectedType ? prompt.type === selectedType : true;
+      return matchesSearch && matchesRole && matchesType;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "likes":
+          return b.likes - a.likes;
+        case "views":
+          return b.views - a.views;
+        case "createdAt":
+        default:
+          return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+    });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
-          나만의 ChatGPT 프롬프트
+          HS본부 프롬프트 라이브러리
         </h1>
-        <p className="text-center text-gray-600 dark:text-gray-300 mt-2">
-          나만의 ChatGPT 프롬프트를 만들고 공유하세요!
+        <p className="text-center text-gray-600 dark:text-gray-300 mt-2 max-w-2xl mx-auto">
+          업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
+          검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
         </p>
       </header>
       
       <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <Input
-              type="search"
-              placeholder="프롬프트 검색..."
-              className="w-full md:w-64 lg:w-80"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="flex flex-col gap-6 mb-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-center gap-4 flex-1">
+              <Input
+                type="search"
+                placeholder="프롬프트 검색..."
+                className="w-full md:w-64 lg:w-80"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
 
-            <Select onValueChange={value => setSelectedRole(value === "all" ? null : value)}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="역할 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">모든 역할</SelectItem>
-                <SelectItem value="기획자">기획자</SelectItem>
-                <SelectItem value="마케터">마케터</SelectItem>
-                <SelectItem value="개발자">개발자</SelectItem>
-                <SelectItem value="디자이너">디자이너</SelectItem>
-                <SelectItem value="분석가">분석가</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select onValueChange={setSortBy} defaultValue="createdAt">
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="정렬 기준" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">생성일순</SelectItem>
+                  <SelectItem value="likes">좋아요순</SelectItem>
+                  <SelectItem value="views">조회수순</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select onValueChange={value => setSelectedType(value === "all" ? null : value)}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="타입 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">모든 타입</SelectItem>
-                <SelectItem value="요약">요약</SelectItem>
-                <SelectItem value="번역">번역</SelectItem>
-                <SelectItem value="작성">작성</SelectItem>
-                <SelectItem value="분석">분석</SelectItem>
-                <SelectItem value="생성">생성</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select onValueChange={value => setSelectedType(value === "all" ? null : value)}>
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="타입 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 타입</SelectItem>
+                  <SelectItem value="요약">요약</SelectItem>
+                  <SelectItem value="번역">번역</SelectItem>
+                  <SelectItem value="작성">작성</SelectItem>
+                  <SelectItem value="분석">분석</SelectItem>
+                  <SelectItem value="생성">생성</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={() => setIsRegistrationOpen(true)}
+              className="bg-[#A50034] hover:bg-[#8B002B] text-white"
+            >
+              새 프롬프트 등록
+            </Button>
           </div>
 
-          <Button onClick={() => setIsRegistrationOpen(true)}>
-            새 프롬프트 등록
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">역할별 필터</Label>
+            <ToggleGroup 
+              type="single" 
+              value={selectedRole} 
+              onValueChange={(value) => setSelectedRole(value || "전체")}
+              className="justify-start flex-wrap gap-2"
+            >
+              {roles.map((role) => (
+                <ToggleGroupItem
+                  key={role}
+                  value={role}
+                  aria-label={`${role} 선택`}
+                  className="data-[state=on]:bg-[#A50034] data-[state=on]:text-white hover:bg-red-100 dark:hover:bg-red-900/20"
+                >
+                  {role}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredPrompts.map((prompt) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          {filteredAndSortedPrompts.map((prompt) => (
             <PromptCard
               key={prompt.id}
               prompt={prompt}
@@ -232,7 +276,7 @@ const Index = () => {
           ))}
         </div>
 
-        {filteredPrompts.length === 0 && (
+        {filteredAndSortedPrompts.length === 0 && (
           <div className="text-center mt-8">
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
               검색 결과가 없습니다.
