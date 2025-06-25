@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
+import PromptDialog from "@/components/PromptDialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,9 @@ const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string>("전체");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("likes");
+  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+  const [dialogViewType, setDialogViewType] = useState<'content' | 'result' | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [prompts, setPrompts] = useState<Prompt[]>([
@@ -443,7 +447,7 @@ const Index = () => {
 ## 실행 계획
 - 캠페인 일정
 - 제작물 리스트
-- 예산 배분
+- 예산 배分
 
 ## 성과 측정
 - KPI 설정
@@ -772,6 +776,18 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
     setIsRegistrationOpen(false);
   };
 
+  const handleViewContent = (prompt: Prompt) => {
+    setSelectedPrompt(prompt);
+    setDialogViewType('content');
+    setIsDialogOpen(true);
+  };
+
+  const handleViewResult = (prompt: Prompt) => {
+    setSelectedPrompt(prompt);
+    setDialogViewType('result');
+    setIsDialogOpen(true);
+  };
+
   const roles = ["전체", "R&D", "기획", "구매", "생산", "SCM", "품질", "영업/마케팅", "공통"];
 
   const filteredAndSortedPrompts = prompts
@@ -852,7 +868,7 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
                   ➕ 새 프롬프트 등록
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-white/95 backdrop-blur-sm">
+              <SheetContent side="right" className="w-[400px] sm:w-[540px]">
                 <SheetHeader>
                   <SheetTitle>📝 새 프롬프트 등록</SheetTitle>
                 </SheetHeader>
@@ -889,6 +905,8 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
               prompt={prompt}
               onCopy={handleCopy}
               onLike={handleLike}
+              onViewContent={handleViewContent}
+              onViewResult={handleViewResult}
             />
           ))}
         </div>
@@ -904,6 +922,15 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
           </div>
         )}
       </main>
+
+      <PromptDialog
+        prompt={selectedPrompt}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onCopy={handleCopy}
+        onLike={handleLike}
+        viewType={dialogViewType}
+      />
     </div>
   );
 };

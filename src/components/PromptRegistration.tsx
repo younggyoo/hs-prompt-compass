@@ -62,7 +62,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           const reader = new FileReader();
           reader.onload = (event) => {
             const imageData = event.target?.result as string;
-            setter(prev => prev + `\n[이미지: ${blob.name || 'pasted-image'}]\n${imageData}\n`);
+            setter(prev => prev + `\n<img src="${imageData}" alt="붙여넣은 이미지" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`);
           };
           reader.readAsDataURL(blob);
           e.preventDefault();
@@ -73,14 +73,14 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
   };
 
   return (
-    <div className="space-y-6 p-4 h-full">
+    <div className="space-y-4 p-4 h-full overflow-y-auto">
       <div className="text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           ✨ 새로운 프롬프트를 등록하고 공유해보세요!
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col h-full">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             📝 제목
@@ -149,7 +149,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           />
         </div>
 
-        <div className="space-y-2 flex-1">
+        <div className="space-y-2">
           <Label htmlFor="content" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             📄 프롬프트 내용 <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
           </Label>
@@ -160,9 +160,15 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onPaste={(e) => handlePaste(e, setContent)}
-            className="min-h-[100px] resize-none flex-1"
+            className="min-h-[120px] resize-none"
             required
           />
+          {content.includes('<img') && (
+            <div 
+              className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -176,13 +182,19 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
             value={result}
             onChange={(e) => setResult(e.target.value)}
             onPaste={(e) => handlePaste(e, setResult)}
-            className="min-h-[80px] resize-none"
+            className="min-h-[100px] resize-none"
           />
+          {result.includes('<img') && (
+            <div 
+              className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
+              dangerouslySetInnerHTML={{ __html: result }}
+            />
+          )}
         </div>
 
         <Button 
           type="submit" 
-          className="w-full bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl mt-auto"
+          className="w-full bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
         >
           ✅ 등록하기
         </Button>
