@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle } from "lucide-react";
+import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import CommentSection from "./CommentSection";
 
@@ -23,6 +23,7 @@ interface Prompt {
   result?: string;
   tool?: string;
   author: string;
+  password?: string;
   likes: number;
   views: number;
   comments: Comment[];
@@ -36,9 +37,22 @@ interface PromptDialogProps {
   onCopy: (content: string, title: string) => void;
   onLike: (id: string) => void;
   onAddComment: (promptId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => void;
+  onEdit?: (prompt: Prompt) => void;
+  onDelete?: (id: string) => void;
+  isAdmin?: boolean;
 }
 
-const PromptDialog = ({ prompt, isOpen, onClose, onCopy, onLike, onAddComment }: PromptDialogProps) => {
+const PromptDialog = ({ 
+  prompt, 
+  isOpen, 
+  onClose, 
+  onCopy, 
+  onLike, 
+  onAddComment, 
+  onEdit, 
+  onDelete, 
+  isAdmin = false 
+}: PromptDialogProps) => {
   const [copied, setCopied] = useState(false);
 
   if (!prompt) return null;
@@ -52,6 +66,8 @@ const PromptDialog = ({ prompt, isOpen, onClose, onCopy, onLike, onAddComment }:
   const handleLike = () => {
     onLike(prompt.id);
   };
+
+  const canEditDelete = isAdmin || prompt.password; // 관리자이거나 비밀번호가 있는 프롬프트
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -102,6 +118,33 @@ const PromptDialog = ({ prompt, isOpen, onClose, onCopy, onLike, onAddComment }:
               <span className="text-sm">{prompt.comments.length}</span>
             </div>
           </div>
+
+          {canEditDelete && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(prompt)}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  수정
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(prompt.id)}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  삭제
+                </Button>
+              )}
+            </div>
+          )}
 
           <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>

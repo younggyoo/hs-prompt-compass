@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ interface PromptRegistrationProps {
     result?: string;
     tool?: string;
     author: string;
+    password: string;
   }) => void;
   editPrompt?: {
     id: string;
@@ -30,26 +31,53 @@ interface PromptRegistrationProps {
     result?: string;
     tool?: string;
     author: string;
+    password?: string;
   } | null;
 }
 
 const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptRegistrationProps) => {
-  const [title, setTitle] = useState(editPrompt?.title || "");
-  const [role, setRole] = useState(editPrompt?.role || "기획");
-  const [type, setType] = useState(editPrompt?.type || "아이디어");
-  const [description, setDescription] = useState(editPrompt?.description || "");
-  const [content, setContent] = useState(editPrompt?.content || "");
-  const [result, setResult] = useState(editPrompt?.result || "");
-  const [tool, setTool] = useState(editPrompt?.tool || "");
-  const [author, setAuthor] = useState(editPrompt?.author || "");
+  const [title, setTitle] = useState("");
+  const [role, setRole] = useState("기획");
+  const [type, setType] = useState("아이디어");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [result, setResult] = useState("");
+  const [tool, setTool] = useState("");
+  const [author, setAuthor] = useState("");
+  const [password, setPassword] = useState("");
   
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const resultTextareaRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    if (editPrompt) {
+      setTitle(editPrompt.title);
+      setRole(editPrompt.role);
+      setType(editPrompt.type);
+      setDescription(editPrompt.description);
+      setContent(editPrompt.content);
+      setResult(editPrompt.result || "");
+      setTool(editPrompt.tool || "");
+      setAuthor(editPrompt.author);
+      setPassword("");
+    } else {
+      setTitle("");
+      setRole("기획");
+      setType("아이디어");
+      setDescription("");
+      setContent("");
+      setResult("");
+      setTool("");
+      setAuthor("");
+      setPassword("");
+    }
+  }, [editPrompt, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !description.trim() || !content.trim() || !author.trim()) {
+    if (!title.trim() || !description.trim() || !content.trim() || !author.trim() || !password.trim()) {
+      alert('모든 필수 항목을 입력해주세요.');
       return;
     }
 
@@ -62,19 +90,9 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
       result: result.trim() || undefined,
       tool: tool.trim() || undefined,
       author: author.trim(),
+      password: password.trim(),
     });
 
-    // Reset form if not editing
-    if (!editPrompt) {
-      setTitle("");
-      setRole("기획");
-      setType("아이디어");
-      setDescription("");
-      setContent("");
-      setResult("");
-      setTool("");
-      setAuthor("");
-    }
     onClose();
   };
 
@@ -113,22 +131,37 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="author" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                👤 작성자
-              </Label>
-              <Input
-                id="author"
-                placeholder="작성자명을 입력해주세요"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="author" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  👤 작성자 *
+                </Label>
+                <Input
+                  id="author"
+                  placeholder="작성자명을 입력해주세요"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  🔒 비밀번호 *
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="수정/삭제용 비밀번호"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                📝 제목
+                📝 제목 *
               </Label>
               <Input
                 id="title"
@@ -183,7 +216,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
 
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                💬 설명
+                💬 설명 *
               </Label>
               <Input
                 id="description"
@@ -208,7 +241,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
 
             <div className="space-y-2">
               <Label htmlFor="content" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                📄 프롬프트 내용 <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
+                📄 프롬프트 내용 * <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
               </Label>
               <Textarea
                 ref={contentTextareaRef}
