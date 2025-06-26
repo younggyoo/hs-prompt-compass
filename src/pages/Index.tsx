@@ -2,13 +2,21 @@ import { useState, useEffect } from "react";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
 import PromptDialog from "@/components/PromptDialog";
+import VisitorCounter from "@/components/VisitorCounter";
+import AdminMode from "@/components/AdminMode";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: Date;
+}
 
 interface Prompt {
   id: string;
@@ -18,8 +26,10 @@ interface Prompt {
   description: string;
   content: string;
   result?: string;
+  author: string;
   likes: number;
   views: number;
+  comments: Comment[];
   createdAt: Date;
 }
 
@@ -30,8 +40,8 @@ const Index = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("likes");
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
-  const [dialogViewType, setDialogViewType] = useState<'content' | 'result' | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   const [prompts, setPrompts] = useState<Prompt[]>([
@@ -60,8 +70,10 @@ const Index = () => {
 다음 회의 안건:
 - 제품 런칭 이벤트 계획 검토
 - Q1 매출 목표 재설정`,
+      author: "김기획",
       likes: 12,
       views: 45,
+      comments: [],
       createdAt: new Date('2024-01-15'),
     },
     {
@@ -100,8 +112,10 @@ const Index = () => {
 ## 결론 및 제언
 핵심 인사이트: 초기 고객 경험이 이탈률에 결정적 영향
 제언사항: 신규 고객 온보딩 프로그램 및 개인화 서비스 확대`,
+      author: "이R&D",
       likes: 8,
       views: 32,
+      comments: [],
       createdAt: new Date('2024-01-20'),
     },
     {
@@ -132,8 +146,10 @@ const Index = () => {
 ## 시사점
 - 우리가 참고할 점
 - 대응 전략 제안`,
+      author: "이영업",
       likes: 15,
       views: 78,
+      comments: [],
       createdAt: new Date('2024-01-25'),
     },
     {
@@ -151,8 +167,10 @@ const Index = () => {
 3. 브레인스토밍 (최소 5개 아이디어)
 4. 아이디어 평가 및 선별
 5. 실행 방안 제시`,
+      author: "이기획",
       likes: 23,
       views: 67,
+      comments: [],
       createdAt: new Date('2024-01-30'),
     },
     {
@@ -178,8 +196,10 @@ const Index = () => {
 - [ ] 결과물 확인
 - [ ] 품질 검증
 - [ ] 후속 조치`,
+      author: "이품질",
       likes: 19,
       views: 54,
+      comments: [],
       createdAt: new Date('2024-02-01'),
     },
     {
@@ -198,8 +218,10 @@ const Index = () => {
 
 원문:
 [여기에 번역할 텍스트 입력]`,
+      author: "이공통",
       likes: 31,
       views: 89,
+      comments: [],
       createdAt: new Date('2024-02-05'),
     },
     {
@@ -230,8 +252,10 @@ const Index = () => {
 5. 결론 및 제언
    - 핵심 발견사항
    - 비즈니스 임플리케이션`,
+      author: "이R&D",
       likes: 27,
       views: 76,
+      comments: [],
       createdAt: new Date('2024-02-10'),
     },
     {
@@ -264,8 +288,10 @@ const Index = () => {
 ## 추진 일정
 - 구매 프로세스 및 일정
 - 도입 계획`,
+      author: "이구매",
       likes: 14,
       views: 42,
+      comments: [],
       createdAt: new Date('2024-02-15'),
     },
     {
@@ -301,8 +327,10 @@ const Index = () => {
 ## 품질 관리
 - 품질 기준 및 검사 계획
 - 불량률 목표 설정`,
+      author: "이생산",
       likes: 21,
       views: 58,
+      comments: [],
       createdAt: new Date('2024-02-20'),
     },
     {
@@ -338,8 +366,10 @@ const Index = () => {
 ## 실행 계획
 - 우선순위 및 일정
 - 예상 효과 및 ROI`,
+      author: "이SCM",
       likes: 18,
       views: 63,
+      comments: [],
       createdAt: new Date('2024-02-25'),
     },
     {
@@ -375,8 +405,10 @@ const Index = () => {
 - 성과 지표 설정
 - 모니터링 계획
 - 표준화 방안`,
+      author: "이품질",
       likes: 25,
       views: 71,
+      comments: [],
       createdAt: new Date('2024-03-01'),
     },
     {
@@ -414,8 +446,10 @@ const Index = () => {
 - KPI 설정
 - 영업 목표 및 할당
 - 성과 측정 방법`,
+      author: "이영업",
       likes: 29,
       views: 84,
+      comments: [],
       createdAt: new Date('2024-03-05'),
     },
     {
@@ -453,8 +487,10 @@ const Index = () => {
 - KPI 설정
 - 측정 방법
 - 성과 분석 계획`,
+      author: "이영업",
       likes: 33,
       views: 92,
+      comments: [],
       createdAt: new Date('2024-03-10'),
     },
     {
@@ -491,8 +527,10 @@ const Index = () => {
 - 개선 우선순위
 - 구현 일정
 - 변화 관리 방안`,
+      author: "이공통",
       likes: 22,
       views: 67,
+      comments: [],
       createdAt: new Date('2024-03-15'),
     },
     {
@@ -530,8 +568,10 @@ const Index = () => {
 - 교육 일정 및 시간
 - 강사 및 운영진
 - 평가 및 피드백 계획`,
+      author: "이공통",
       likes: 17,
       views: 49,
+      comments: [],
       createdAt: new Date('2024-03-20'),
     },
     {
@@ -569,8 +609,10 @@ const Index = () => {
 - 손익분기점
 - ROI/NPV 분석
 - 민감도 분석`,
+      author: "이기획",
       likes: 20,
       views: 55,
+      comments: [],
       createdAt: new Date('2024-03-25'),
     },
     {
@@ -609,8 +651,10 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
 - 성과 인센티브
 - 중간 보상
 - 팀 동기 부여 방안`,
+      author: "이공통",
       likes: 24,
       views: 73,
+      comments: [],
       createdAt: new Date('2024-03-30'),
     },
     {
@@ -653,8 +697,10 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
 - 1차 조사 (설문, 인터뷰)
 - 2차 조사 (문헌, 통계)
 - 데이터 분석 방법`,
+      author: "이영업",
       likes: 26,
       views: 81,
+      comments: [],
       createdAt: new Date('2024-04-05'),
     },
     {
@@ -697,8 +743,10 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
 - 합의 내용 문서화
 - 이행 점검 계획
 - 관계 유지 방안`,
+      author: "이구매",
       likes: 19,
       views: 62,
+      comments: [],
       createdAt: new Date('2024-04-10'),
     },
     {
@@ -741,8 +789,10 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
 - 다음 기간 목표
 - 개발 계획
 - 지원 방안`,
+      author: "이공통",
       likes: 21,
       views: 58,
+      comments: [],
       createdAt: new Date('2024-04-15'),
     },
   ]);
@@ -764,28 +814,60 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
     );
   };
 
-  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views'>) => {
+  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments'>) => {
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
       likes: 0,
       views: 0,
+      comments: [],
       createdAt: new Date(),
     };
     setPrompts(prev => [newPrompt, ...prev]);
-    setIsRegistrationOpen(false);
   };
 
   const handleViewContent = (prompt: Prompt) => {
-    setSelectedPrompt(prompt);
-    setDialogViewType('content');
+    // 조회수 증가
+    setPrompts(prevPrompts => 
+      prevPrompts.map(p =>
+        p.id === prompt.id 
+          ? { ...p, views: p.views + 1 }
+          : p
+      )
+    );
+    
+    setSelectedPrompt({ ...prompt, views: prompt.views + 1 });
     setIsDialogOpen(true);
   };
 
-  const handleViewResult = (prompt: Prompt) => {
-    setSelectedPrompt(prompt);
-    setDialogViewType('result');
-    setIsDialogOpen(true);
+  const handleAddComment = (promptId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => {
+    const newComment: Comment = {
+      ...comment,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+    };
+
+    setPrompts(prevPrompts => 
+      prevPrompts.map(prompt =>
+        prompt.id === promptId 
+          ? { ...prompt, comments: [...prompt.comments, newComment] }
+          : prompt
+      )
+    );
+
+    // 다이얼로그가 열려있다면 업데이트
+    if (selectedPrompt && selectedPrompt.id === promptId) {
+      setSelectedPrompt(prev => prev ? { ...prev, comments: [...prev.comments, newComment] } : null);
+    }
+  };
+
+  const handleDeletePrompt = (promptId: string) => {
+    if (confirm('정말로 이 프롬프트를 삭제하시겠습니까?')) {
+      setPrompts(prev => prev.filter(p => p.id !== promptId));
+      toast({
+        title: "프롬프트가 삭제되었습니다.",
+      });
+    }
   };
 
   const roles = ["전체", "R&D", "기획", "구매", "생산", "SCM", "품질", "영업/마케팅", "공통"];
@@ -813,6 +895,11 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div></div>
+          <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} />
+        </div>
+        
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
           🏢 HS본부 프롬프트 라이브러리
         </h1>
@@ -820,6 +907,8 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
           💡 업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
           ✨ 검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
         </p>
+        
+        <VisitorCounter />
       </header>
       
       <main className="container mx-auto px-4 py-8">
@@ -860,21 +949,12 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
               </Select>
             </div>
 
-            <Sheet open={isRegistrationOpen} onOpenChange={setIsRegistrationOpen}>
-              <SheetTrigger asChild>
-                <Button 
-                  className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
-                >
-                  ➕ 새 프롬프트 등록
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                <SheetHeader>
-                  <SheetTitle>📝 새 프롬프트 등록</SheetTitle>
-                </SheetHeader>
-                <PromptRegistration onSubmit={addPrompt} />
-              </SheetContent>
-            </Sheet>
+            <Button 
+              onClick={() => setIsRegistrationOpen(true)}
+              className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
+            >
+              ➕ 새 프롬프트 등록
+            </Button>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -906,7 +986,8 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
               onCopy={handleCopy}
               onLike={handleLike}
               onViewContent={handleViewContent}
-              onViewResult={handleViewResult}
+              onDelete={handleDeletePrompt}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -923,13 +1004,19 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
         )}
       </main>
 
+      <PromptRegistration
+        isOpen={isRegistrationOpen}
+        onClose={() => setIsRegistrationOpen(false)}
+        onSubmit={addPrompt}
+      />
+
       <PromptDialog
         prompt={selectedPrompt}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onCopy={handleCopy}
         onLike={handleLike}
-        viewType={dialogViewType}
+        onAddComment={handleAddComment}
       />
     </div>
   );

@@ -1,9 +1,16 @@
 
 import { useState } from "react";
-import { Copy, CheckCircle, ThumbsUp } from "lucide-react";
+import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: Date;
+}
 
 interface Prompt {
   id: string;
@@ -13,8 +20,10 @@ interface Prompt {
   description: string;
   content: string;
   result?: string;
+  author: string;
   likes: number;
   views: number;
+  comments: Comment[];
   createdAt: Date;
 }
 
@@ -23,10 +32,22 @@ interface PromptCardProps {
   onCopy: (content: string, title: string) => void;
   onLike: (id: string) => void;
   onViewContent: (prompt: Prompt) => void;
-  onViewResult: (prompt: Prompt) => void;
+  onEdit?: (prompt: Prompt) => void;
+  onDelete?: (id: string) => void;
+  isAdmin?: boolean;
+  currentUser?: string;
 }
 
-const PromptCard = ({ prompt, onCopy, onLike, onViewContent, onViewResult }: PromptCardProps) => {
+const PromptCard = ({ 
+  prompt, 
+  onCopy, 
+  onLike, 
+  onViewContent, 
+  onEdit, 
+  onDelete, 
+  isAdmin = false,
+  currentUser 
+}: PromptCardProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -38,6 +59,12 @@ const PromptCard = ({ prompt, onCopy, onLike, onViewContent, onViewResult }: Pro
   const handleLike = () => {
     onLike(prompt.id);
   };
+
+  const handleViewContent = () => {
+    onViewContent(prompt);
+  };
+
+  const canEditDelete = isAdmin || (currentUser && currentUser === prompt.author);
 
   return (
     <Card className="group hover:shadow-xl transition-all duration-300 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:scale-[1.02] hover:border-[#A50034] dark:hover:border-[#A50034] flex flex-col h-full">
@@ -54,7 +81,7 @@ const PromptCard = ({ prompt, onCopy, onLike, onViewContent, onViewResult }: Pro
               {prompt.type}
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4 mb-2">
             <Button
               variant="ghost"
               size="sm"
@@ -62,13 +89,22 @@ const PromptCard = ({ prompt, onCopy, onLike, onViewContent, onViewResult }: Pro
               className="text-gray-500 hover:text-[#A50034] dark:text-gray-400 dark:hover:text-[#A50034] hover:bg-[#A50034]/10 dark:hover:bg-[#A50034]/20 p-1 h-auto"
             >
               <ThumbsUp className="w-4 h-4 mr-1" />
-              <span className="text-sm font-medium">
-                {prompt.likes}
-              </span>
+              <span className="text-sm font-medium">{prompt.likes}</span>
             </Button>
+            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <Eye className="w-4 h-4" />
+              <span className="text-sm">{prompt.views}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm">{prompt.comments.length}</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            작성자: <span className="text-[#A50034] font-medium">{prompt.author}</span>
           </div>
         </div>
-        <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
+        <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed">
           {prompt.description}
         </CardDescription>
       </CardHeader>
@@ -78,19 +114,36 @@ const PromptCard = ({ prompt, onCopy, onLike, onViewContent, onViewResult }: Pro
           <Button
             variant="outline"
             className="w-full justify-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-200"
-            onClick={() => onViewContent(prompt)}
+            onClick={handleViewContent}
           >
             📄 프롬프트 내용 보기
           </Button>
 
-          {prompt.result && (
-            <Button
-              variant="outline"
-              className="w-full justify-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-200"
-              onClick={() => onViewResult(prompt)}
-            >
-              ✨ 프롬프트 결과 보기
-            </Button>
+          {canEditDelete && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(prompt)}
+                  className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  수정
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(prompt.id)}
+                  className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  삭제
+                </Button>
+              )}
+            </div>
           )}
         </div>
         
