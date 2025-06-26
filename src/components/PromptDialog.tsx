@@ -21,6 +21,7 @@ interface Prompt {
   description: string;
   content: string;
   result?: string;
+  tool?: string;
   author: string;
   likes: number;
   views: number;
@@ -70,6 +71,12 @@ const PromptDialog = ({ prompt, isOpen, onClose, onCopy, onLike, onAddComment }:
           <p className="text-gray-600 dark:text-gray-300 mt-2">
             {prompt.description}
           </p>
+          {prompt.tool && (
+            <div className="mt-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">🛠️ 사용 가능 Tool: </span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{prompt.tool}</span>
+            </div>
+          )}
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             작성자: <span className="text-[#A50034] font-medium">{prompt.author}</span>
           </div>

@@ -17,18 +17,31 @@ interface PromptRegistrationProps {
     description: string;
     content: string;
     result?: string;
+    tool?: string;
     author: string;
   }) => void;
+  editPrompt?: {
+    id: string;
+    title: string;
+    role: string;
+    type: string;
+    description: string;
+    content: string;
+    result?: string;
+    tool?: string;
+    author: string;
+  } | null;
 }
 
-const PromptRegistration = ({ isOpen, onClose, onSubmit }: PromptRegistrationProps) => {
-  const [title, setTitle] = useState("");
-  const [role, setRole] = useState("기획");
-  const [type, setType] = useState("아이디어");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [result, setResult] = useState("");
-  const [author, setAuthor] = useState("");
+const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptRegistrationProps) => {
+  const [title, setTitle] = useState(editPrompt?.title || "");
+  const [role, setRole] = useState(editPrompt?.role || "기획");
+  const [type, setType] = useState(editPrompt?.type || "아이디어");
+  const [description, setDescription] = useState(editPrompt?.description || "");
+  const [content, setContent] = useState(editPrompt?.content || "");
+  const [result, setResult] = useState(editPrompt?.result || "");
+  const [tool, setTool] = useState(editPrompt?.tool || "");
+  const [author, setAuthor] = useState(editPrompt?.author || "");
   
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const resultTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -47,17 +60,21 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit }: PromptRegistrationPro
       description: description.trim(),
       content: content.trim(),
       result: result.trim() || undefined,
+      tool: tool.trim() || undefined,
       author: author.trim(),
     });
 
-    // Reset form
-    setTitle("");
-    setRole("기획");
-    setType("아이디어");
-    setDescription("");
-    setContent("");
-    setResult("");
-    setAuthor("");
+    // Reset form if not editing
+    if (!editPrompt) {
+      setTitle("");
+      setRole("기획");
+      setType("아이디어");
+      setDescription("");
+      setContent("");
+      setResult("");
+      setTool("");
+      setAuthor("");
+    }
     onClose();
   };
 
@@ -85,13 +102,13 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit }: PromptRegistrationPro
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>📝 새 프롬프트 등록</DialogTitle>
+          <DialogTitle>{editPrompt ? '📝 프롬프트 수정' : '📝 새 프롬프트 등록'}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              ✨ 새로운 프롬프트를 등록하고 공유해보세요!
+              {editPrompt ? '✏️ 프롬프트를 수정해보세요!' : '✨ 새로운 프롬프트를 등록하고 공유해보세요!'}
             </p>
           </div>
 
@@ -178,6 +195,18 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit }: PromptRegistrationPro
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="tool" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                🛠️ 사용 가능 Tool (선택사항)
+              </Label>
+              <Input
+                id="tool"
+                placeholder="사용 가능한 도구를 입력해주세요 (예: ChatGPT, Claude, Gemini 등)"
+                value={tool}
+                onChange={(e) => setTool(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="content" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 📄 프롬프트 내용 <span className="text-xs text-gray-500">(이미지 붙여넣기 가능)</span>
               </Label>
@@ -224,7 +253,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit }: PromptRegistrationPro
               type="submit" 
               className="w-full bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
             >
-              ✅등록하기
+              {editPrompt ? '✅수정하기' : '✅등록하기'}
             </Button>
           </form>
         </div>

@@ -20,6 +20,7 @@ interface Prompt {
   description: string;
   content: string;
   result?: string;
+  tool?: string;
   author: string;
   likes: number;
   views: number;
@@ -99,9 +100,6 @@ const PromptCard = ({
               <MessageCircle className="w-4 h-4" />
               <span className="text-sm">{prompt.comments.length}</span>
             </div>
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            작성자: <span className="text-[#A50034] font-medium">{prompt.author}</span>
           </div>
         </div>
         <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed">

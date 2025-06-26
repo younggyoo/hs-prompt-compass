@@ -26,6 +26,7 @@ interface Prompt {
   description: string;
   content: string;
   result?: string;
+  tool?: string;
   author: string;
   likes: number;
   views: number;
@@ -42,6 +43,7 @@ const Index = () => {
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editPrompt, setEditPrompt] = useState<Prompt | null>(null);
   const { toast } = useToast();
 
   const [prompts, setPrompts] = useState<Prompt[]>([
@@ -812,6 +814,11 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
           : prompt
       )
     );
+
+    // 다이얼로그가 열려있고 현재 프롬프트가 좋아요 된 프롬프트라면 업데이트
+    if (selectedPrompt && selectedPrompt.id === promptId) {
+      setSelectedPrompt(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
+    }
   };
 
   const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments'>) => {
@@ -824,6 +831,19 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
       createdAt: new Date(),
     };
     setPrompts(prev => [newPrompt, ...prev]);
+  };
+
+  const updatePrompt = (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments'>) => {
+    if (!editPrompt) return;
+    
+    setPrompts(prevPrompts => 
+      prevPrompts.map(prompt =>
+        prompt.id === editPrompt.id 
+          ? { ...prompt, ...updatedPromptData }
+          : prompt
+      )
+    );
+    setEditPrompt(null);
   };
 
   const handleViewContent = (prompt: Prompt) => {
@@ -859,6 +879,11 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
     if (selectedPrompt && selectedPrompt.id === promptId) {
       setSelectedPrompt(prev => prev ? { ...prev, comments: [...prev.comments, newComment] } : null);
     }
+  };
+
+  const handleEditPrompt = (prompt: Prompt) => {
+    setEditPrompt(prompt);
+    setIsRegistrationOpen(true);
   };
 
   const handleDeletePrompt = (promptId: string) => {
@@ -900,7 +925,7 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
           <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} />
         </div>
         
-        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mt-4">
           🏢 HS본부 프롬프트 라이브러리
         </h1>
         <p className="text-center text-gray-600 dark:text-gray-300 mt-2 max-w-2xl mx-auto">
@@ -950,7 +975,10 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
             </div>
 
             <Button 
-              onClick={() => setIsRegistrationOpen(true)}
+              onClick={() => {
+                setEditPrompt(null);
+                setIsRegistrationOpen(true);
+              }}
               className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
             >
               ➕ 새 프롬프트 등록
@@ -986,6 +1014,7 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
               onCopy={handleCopy}
               onLike={handleLike}
               onViewContent={handleViewContent}
+              onEdit={handleEditPrompt}
               onDelete={handleDeletePrompt}
               isAdmin={isAdmin}
             />
@@ -1006,8 +1035,12 @@ SMART 기준에 따라 목표를 설정하고 관리 계획을 수립하세요:
 
       <PromptRegistration
         isOpen={isRegistrationOpen}
-        onClose={() => setIsRegistrationOpen(false)}
-        onSubmit={addPrompt}
+        onClose={() => {
+          setIsRegistrationOpen(false);
+          setEditPrompt(null);
+        }}
+        onSubmit={editPrompt ? updatePrompt : addPrompt}
+        editPrompt={editPrompt}
       />
 
       <PromptDialog
