@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
+import { Copy, CheckCircle, ThumbsUp, Heart, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import CommentSection from "./CommentSection";
 
@@ -10,6 +10,7 @@ interface Comment {
   id: string;
   author: string;
   content: string;
+  password?: string;
   createdAt: Date;
 }
 
@@ -37,9 +38,12 @@ interface PromptDialogProps {
   onCopy: (content: string, title: string) => void;
   onLike: (id: string) => void;
   onAddComment: (promptId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => void;
+  onEditComment?: (promptId: string, commentId: string, content: string) => void;
+  onDeleteComment?: (promptId: string, commentId: string) => void;
   onEdit?: (prompt: Prompt) => void;
   onDelete?: (id: string) => void;
   isAdmin?: boolean;
+  likedPrompts?: string[];
 }
 
 const PromptDialog = ({ 
@@ -49,16 +53,23 @@ const PromptDialog = ({
   onCopy, 
   onLike, 
   onAddComment, 
+  onEditComment,
+  onDeleteComment,
   onEdit, 
   onDelete, 
-  isAdmin = false 
+  isAdmin = false,
+  likedPrompts = []
 }: PromptDialogProps) => {
   const [copied, setCopied] = useState(false);
 
   if (!prompt) return null;
 
   const handleCopy = () => {
-    onCopy(prompt.content, prompt.title);
+    // HTML 태그 제거하고 텍스트만 추출
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = prompt.content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    onCopy(textContent, prompt.title);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -67,7 +78,15 @@ const PromptDialog = ({
     onLike(prompt.id);
   };
 
-  const canEditDelete = isAdmin || prompt.password; // 관리자이거나 비밀번호가 있는 프롬프트
+  const canEditDelete = isAdmin || prompt.password;
+  const isLiked = likedPrompts.includes(prompt.id);
+
+  // HTML에서 텍스트만 추출하는 함수
+  const extractTextFromHtml = (html: string) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,9 +123,11 @@ const PromptDialog = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className="text-gray-500 hover:text-[#A50034] dark:text-gray-400 dark:hover:text-[#A50034] hover:bg-[#A50034]/10 dark:hover:bg-[#A50034]/20 p-1 h-auto"
+              className={`text-gray-500 hover:text-[#A50034] dark:text-gray-400 dark:hover:text-[#A50034] hover:bg-[#A50034]/10 dark:hover:bg-[#A50034]/20 p-1 h-auto ${
+                isLiked ? 'text-[#A50034] dark:text-[#A50034]' : ''
+              }`}
             >
-              <ThumbsUp className="w-4 h-4 mr-1" />
+              {isLiked ? <Heart className="w-4 h-4 mr-1 fill-current" /> : <ThumbsUp className="w-4 h-4 mr-1" />}
               <span className="text-sm font-medium">{prompt.likes}</span>
             </Button>
             <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
@@ -119,8 +140,24 @@ const PromptDialog = ({
             </div>
           </div>
 
+          <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>
+            <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
+              {extractTextFromHtml(prompt.content)}
+            </div>
+          </div>
+
+          {prompt.result && (
+            <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
+              <h3 className="font-semibold text-[#A50034] dark:text-[#A50034] mb-3">✨ 프롬프트 결과</h3>
+              <div className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap">
+                {extractTextFromHtml(prompt.result)}
+              </div>
+            </div>
+          )}
+
           {canEditDelete && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-4 border-t">
               {onEdit && (
                 <Button
                   variant="outline"
@@ -146,28 +183,12 @@ const PromptDialog = ({
             </div>
           )}
 
-          <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>
-            <div 
-              className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: prompt.content }}
-            />
-          </div>
-
-          {prompt.result && (
-            <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
-              <h3 className="font-semibold text-[#A50034] dark:text-[#A50034] mb-3">✨ 프롬프트 결과</h3>
-              <div 
-                className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: prompt.result }}
-              />
-            </div>
-          )}
-
           <CommentSection
             promptId={prompt.id}
             comments={prompt.comments}
             onAddComment={onAddComment}
+            onEditComment={onEditComment}
+            onDeleteComment={onDeleteComment}
           />
 
           <div className="flex items-center justify-end pt-4 border-t">
