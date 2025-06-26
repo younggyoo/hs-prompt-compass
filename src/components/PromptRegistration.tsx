@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -52,7 +51,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
     setResult("");
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>, setter: (value: string) => void) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>, currentValue: string, setter: (value: string) => void) => {
     const items = e.clipboardData.items;
     
     for (let i = 0; i < items.length; i++) {
@@ -62,7 +61,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           const reader = new FileReader();
           reader.onload = (event) => {
             const imageData = event.target?.result as string;
-            setter(prev => prev + `\n<img src="${imageData}" alt="붙여넣은 이미지" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`);
+            setter(currentValue + `\n<img src="${imageData}" alt="붙여넣은 이미지" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`);
           };
           reader.readAsDataURL(blob);
           e.preventDefault();
@@ -159,7 +158,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
             placeholder="프롬프트 내용을 입력해주세요 (Ctrl+V로 이미지도 붙여넣을 수 있습니다)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            onPaste={(e) => handlePaste(e, setContent)}
+            onPaste={(e) => handlePaste(e, content, setContent)}
             className="min-h-[120px] resize-none"
             required
           />
@@ -181,7 +180,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
             placeholder="이 프롬프트를 사용했을 때의 예상 결과나 실제 결과를 입력해주세요... (Ctrl+V로 이미지도 붙여넣을 수 있습니다)"
             value={result}
             onChange={(e) => setResult(e.target.value)}
-            onPaste={(e) => handlePaste(e, setResult)}
+            onPaste={(e) => handlePaste(e, result, setResult)}
             className="min-h-[100px] resize-none"
           />
           {result.includes('<img') && (
@@ -196,7 +195,7 @@ const PromptRegistration = ({ onSubmit }: PromptRegistrationProps) => {
           type="submit" 
           className="w-full bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
         >
-          ✅ 등록하기
+          ✅등록하기
         </Button>
       </form>
     </div>
