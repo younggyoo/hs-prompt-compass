@@ -260,8 +260,11 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
               />
               {content.includes('<img') && (
                 <div 
-                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
+                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: removeLinksFromPreview(content) }}
+                  style={{
+                    wordBreak: 'break-word'
+                  }}
                 />
               )}
             </div>
@@ -281,8 +284,11 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
               />
               {result.includes('<img') && (
                 <div 
-                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
+                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: removeLinksFromPreview(result) }}
+                  style={{
+                    wordBreak: 'break-word'
+                  }}
                 />
               )}
             </div>
