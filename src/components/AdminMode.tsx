@@ -4,13 +4,40 @@ import { Shield, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import AdminDashboard from './AdminDashboard';
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  password?: string;
+  createdAt: Date;
+}
+
+interface Prompt {
+  id: string;
+  title: string;
+  role: string;
+  type: string;
+  description: string;
+  content: string;
+  result?: string;
+  tool?: string;
+  author: string;
+  likes: number;
+  views: number;
+  copyCount: number;
+  comments: Comment[];
+  createdAt: Date;
+}
 
 interface AdminModeProps {
   isAdmin: boolean;
   onAdminToggle: (isAdmin: boolean) => void;
+  prompts: Prompt[];
 }
 
-const AdminMode = ({ isAdmin, onAdminToggle }: AdminModeProps) => {
+const AdminMode = ({ isAdmin, onAdminToggle, prompts }: AdminModeProps) => {
   const [password, setPassword] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   
@@ -30,15 +57,18 @@ const AdminMode = ({ isAdmin, onAdminToggle }: AdminModeProps) => {
 
   if (isAdmin) {
     return (
-      <Button
-        onClick={handleLogout}
-        variant="outline"
-        size="sm"
-        className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-      >
-        <ShieldCheck className="w-4 h-4 mr-2" />
-        관리자 모드 OFF
-      </Button>
+      <div className="flex gap-2">
+        <AdminDashboard prompts={prompts} isAdmin={isAdmin} />
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          size="sm"
+          className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+        >
+          <ShieldCheck className="w-4 h-4 mr-2" />
+          관리자 모드 OFF
+        </Button>
+      </div>
     );
   }
 

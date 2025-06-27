@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, CheckCircle, ThumbsUp, Heart, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
+import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import CommentSection from "./CommentSection";
 
@@ -27,6 +27,7 @@ interface Prompt {
   password?: string;
   likes: number;
   views: number;
+  copyCount: number;
   comments: Comment[];
   createdAt: Date;
 }
@@ -96,10 +97,10 @@ const PromptDialog = ({
             {prompt.title}
           </DialogTitle>
           <div className="flex gap-2 mt-2">
-            <Badge variant="secondary" className="bg-[#A50034]/10 dark:bg-[#A50034]/20 text-[#A50034] dark:text-[#A50034]">
+            <Badge variant="secondary" className="bg-[#A50034]/10 dark:bg-[#A50034]/20 text-[#A50034] dark:text-[#A50034] rounded-full">
               {prompt.role}
             </Badge>
-            <Badge variant="outline" className="border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300">
+            <Badge variant="outline" className="border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 rounded-full">
               {prompt.type}
             </Badge>
           </div>
@@ -127,7 +128,7 @@ const PromptDialog = ({
                 isLiked ? 'text-[#A50034] dark:text-[#A50034]' : ''
               }`}
             >
-              {isLiked ? <Heart className="w-4 h-4 mr-1 fill-current" /> : <ThumbsUp className="w-4 h-4 mr-1" />}
+              <ThumbsUp className={`w-4 h-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
               <span className="text-sm font-medium">{prompt.likes}</span>
             </Button>
             <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
@@ -137,6 +138,10 @@ const PromptDialog = ({
             <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
               <MessageCircle className="w-4 h-4" />
               <span className="text-sm">{prompt.comments.length}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <Copy className="w-4 h-4" />
+              <span className="text-sm">{prompt.copyCount || 0}</span>
             </div>
           </div>
 
@@ -204,12 +209,12 @@ const PromptDialog = ({
               {copied ? (
                 <>
                   <CheckCircle className="w-5 h-5 mr-2" />
-                  📋 복사됨!
+                  복사됨!
                 </>
               ) : (
                 <>
                   <Copy className="w-5 h-5 mr-2" />
-                  📋 프롬프트 복사
+                  프롬프트 복사
                 </>
               )}
             </Button>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PromptCard from "@/components/PromptCard";
 import PromptRegistration from "@/components/PromptRegistration";
@@ -34,6 +33,7 @@ interface Prompt {
   password?: string;
   likes: number;
   views: number;
+  copyCount: number;
   comments: Comment[];
   createdAt: Date;
 }
@@ -73,6 +73,7 @@ const Index = () => {
         const parsed = JSON.parse(savedPrompts);
         return parsed.map((p: any) => ({
           ...p,
+          copyCount: p.copyCount || 0,
           createdAt: new Date(p.createdAt),
           comments: p.comments?.map((c: any) => ({
             ...c,
@@ -116,6 +117,7 @@ const Index = () => {
         password: "default123",
         likes: 45,
         views: 234,
+        copyCount: 89,
         comments: [],
         createdAt: new Date('2024-01-15'),
       },
@@ -147,6 +149,7 @@ const Index = () => {
         password: "default123",
         likes: 38,
         views: 189,
+        copyCount: 62,
         comments: [],
         createdAt: new Date('2024-01-20'),
       },
@@ -169,6 +172,7 @@ const Index = () => {
         author: "박기획",
         likes: 32,
         views: 156,
+        copyCount: 47,
         comments: [],
         createdAt: new Date('2024-01-25'),
       },
@@ -200,6 +204,7 @@ const Index = () => {
         author: "최생산",
         likes: 28,
         views: 98,
+        copyCount: 39,
         comments: [],
         createdAt: new Date('2024-02-01'),
       },
@@ -231,6 +236,7 @@ const Index = () => {
         author: "김영업",
         likes: 41,
         views: 203,
+        copyCount: 55,
         comments: [],
         createdAt: new Date('2024-02-05'),
       },
@@ -265,6 +271,7 @@ const Index = () => {
         author: "이공통",
         likes: 35,
         views: 167,
+        copyCount: 44,
         comments: [],
         createdAt: new Date('2024-02-10'),
       },
@@ -297,6 +304,7 @@ const Index = () => {
         author: "박품질",
         likes: 29,
         views: 134,
+        copyCount: 38,
         comments: [],
         createdAt: new Date('2024-02-15'),
       },
@@ -328,6 +336,7 @@ const Index = () => {
         author: "정공통",
         likes: 33,
         views: 145,
+        copyCount: 41,
         comments: [],
         createdAt: new Date('2024-02-20'),
       },
@@ -358,6 +367,7 @@ const Index = () => {
         author: "한번역",
         likes: 27,
         views: 112,
+        copyCount: 29,
         comments: [],
         createdAt: new Date('2024-02-25'),
       },
@@ -389,6 +399,7 @@ const Index = () => {
         author: "차R&D",
         likes: 31,
         views: 178,
+        copyCount: 36,
         comments: [],
         createdAt: new Date('2024-03-01'),
       },
@@ -425,6 +436,7 @@ const Index = () => {
         author: "김프로젝트",
         likes: 39,
         views: 198,
+        copyCount: 42,
         comments: [],
         createdAt: new Date('2024-03-05'),
       },
@@ -461,6 +473,7 @@ const Index = () => {
         author: "이구매",
         likes: 26,
         views: 89,
+        copyCount: 21,
         comments: [],
         createdAt: new Date('2024-03-10'),
       },
@@ -499,6 +512,7 @@ const Index = () => {
         author: "최SCM",
         likes: 24,
         views: 76,
+        copyCount: 18,
         comments: [],
         createdAt: new Date('2024-03-15'),
       },
@@ -538,6 +552,7 @@ const Index = () => {
         author: "박영업",
         likes: 37,
         views: 143,
+        copyCount: 40,
         comments: [],
         createdAt: new Date('2024-03-20'),
       },
@@ -577,6 +592,7 @@ const Index = () => {
         author: "연R&D",
         likes: 22,
         views: 67,
+        copyCount: 15,
         comments: [],
         createdAt: new Date('2024-03-25'),
       },
@@ -619,6 +635,7 @@ const Index = () => {
         author: "김생산",
         likes: 30,
         views: 121,
+        copyCount: 33,
         comments: [],
         createdAt: new Date('2024-03-30'),
       },
@@ -663,6 +680,7 @@ const Index = () => {
         author: "홍마케팅",
         likes: 43,
         views: 176,
+        copyCount: 48,
         comments: [],
         createdAt: new Date('2024-04-01'),
       },
@@ -704,6 +722,7 @@ const Index = () => {
         author: "서문제해결",
         likes: 36,
         views: 152,
+        copyCount: 41,
         comments: [],
         createdAt: new Date('2024-04-05'),
       },
@@ -747,6 +766,7 @@ const Index = () => {
         author: "성평가담당",
         likes: 28,
         views: 94,
+        copyCount: 22,
         comments: [],
         createdAt: new Date('2024-04-10'),
       },
@@ -792,6 +812,7 @@ const Index = () => {
         author: "보안담당",
         likes: 34,
         views: 138,
+        copyCount: 37,
         comments: [],
         createdAt: new Date('2024-04-15'),
       },
@@ -809,6 +830,16 @@ const Index = () => {
 
   const handleCopy = (content: string, title: string) => {
     navigator.clipboard.writeText(content);
+    
+    // 복사수 증가
+    setPrompts(prevPrompts => 
+      prevPrompts.map(prompt =>
+        prompt.title === title 
+          ? { ...prompt, copyCount: (prompt.copyCount || 0) + 1 }
+          : prompt
+      )
+    );
+    
     toast({
       title: `${title} 내용이 복사되었습니다.`,
     });
@@ -846,19 +877,20 @@ const Index = () => {
     }
   };
 
-  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments'>) => {
+  const addPrompt = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
       likes: 0,
       views: 0,
+      copyCount: 0,
       comments: [],
       createdAt: new Date(),
     };
     setPrompts(prev => [newPrompt, ...prev]);
   };
 
-  const updatePrompt = (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments'>) => {
+  const updatePrompt = (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     if (!editPrompt) return;
     
     setPrompts(prevPrompts => 
@@ -1152,7 +1184,7 @@ const Index = () => {
 
       {/* 관리자 모드 버튼을 하단에 배치 */}
       <div className="fixed bottom-4 left-4">
-        <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} />
+        <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} prompts={prompts} />
       </div>
 
       <PromptRegistration
