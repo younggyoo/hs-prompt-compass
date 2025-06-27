@@ -12,7 +12,7 @@ interface FilterDropdownProps {
   label: string;
   options: string[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string);
   isRole?: boolean;
 }
 
@@ -24,7 +24,7 @@ const FilterDropdown = ({ label, options, value, onChange, isRole = false }: Fil
           variant="outline" 
           className={`flex items-center gap-2 justify-between border-gray-300 dark:border-gray-600 ${
             isRole 
-              ? "min-w-[180px] rounded-full px-6 py-2" 
+              ? "min-w-[150px] rounded-2xl px-4 py-2" 
               : "min-w-[100px]"
           }`}
         >
