@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,13 @@ const PromptDialog = ({
   const canEditDelete = isAdmin || prompt.password;
   const isLiked = likedPrompts.includes(prompt.id);
 
+  // HTML에서 텍스트만 추출하는 함수
+  const extractTextFromHtml = (html: string) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -139,19 +147,17 @@ const PromptDialog = ({
 
           <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>
-            <div 
-              className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: prompt.content }}
-            />
+            <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
+              {extractTextFromHtml(prompt.content)}
+            </div>
           </div>
 
           {prompt.result && (
             <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
               <h3 className="font-semibold text-[#A50034] dark:text-[#A50034] mb-3">✨ 프롬프트 결과</h3>
-              <div 
-                className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: prompt.result }}
-              />
+              <div className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap">
+                {extractTextFromHtml(prompt.result)}
+              </div>
             </div>
           )}
 
@@ -190,7 +196,7 @@ const PromptDialog = ({
             onDeleteComment={onDeleteComment}
           />
 
-          <div className="flex items-center justify-center pt-4 border-t">
+          <div className="flex items-center justify-end pt-4 border-t">
             <Button
               onClick={handleCopy}
               size="lg"

@@ -116,11 +116,6 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
     }
   };
 
-  // 미리보기용 HTML에서 링크 태그 제거하는 함수
-  const removeLinksFromPreview = (html: string) => {
-    return html.replace(/<a[^>]*>(.*?)<\/a>/gi, '$1');
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -261,7 +256,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
               {content.includes('<img') && (
                 <div 
                   className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: removeLinksFromPreview(content) }}
+                  dangerouslySetInnerHTML={{ __html: content }}
                 />
               )}
             </div>
@@ -282,7 +277,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
               {result.includes('<img') && (
                 <div 
                   className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: removeLinksFromPreview(result) }}
+                  dangerouslySetInnerHTML={{ __html: result }}
                 />
               )}
             </div>

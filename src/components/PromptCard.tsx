@@ -95,14 +95,14 @@ const PromptCard = ({
     >
       <CardHeader className="pb-3">
         <div className="flex-1">
-          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2 leading-tight">
+          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {prompt.title}
           </CardTitle>
           <div className="flex gap-2 mb-2">
-            <Badge variant="secondary" className="bg-[#A50034]/10 dark:bg-[#A50034]/20 text-[#A50034] dark:text-[#A50034] rounded-full px-3 py-1">
+            <Badge variant="secondary" className="bg-[#A50034]/10 dark:bg-[#A50034]/20 text-[#A50034] dark:text-[#A50034] rounded-full">
               {prompt.role}
             </Badge>
-            <Badge variant="outline" className="border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 rounded-full px-3 py-1">
+            <Badge variant="outline" className="border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 rounded-full">
               {prompt.type}
             </Badge>
           </div>
@@ -167,7 +167,7 @@ const PromptCard = ({
           )}
         </div>
         
-        <div className="flex justify-center mt-auto pt-4">
+        <div className="flex items-center justify-end mt-auto pt-4">
           <Button
             onClick={handleCopy}
             size="lg"
