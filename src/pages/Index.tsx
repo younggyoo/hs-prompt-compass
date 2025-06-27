@@ -1061,6 +1061,8 @@ const Index = () => {
           return b.likes - a.likes;
         case "views":
           return b.views - a.views;
+        case "copyCount":
+          return (b.copyCount || 0) - (a.copyCount || 0);
         case "createdAt":
         default:
           return b.createdAt.getTime() - a.createdAt.getTime();
@@ -1104,6 +1106,7 @@ const Index = () => {
                   <SelectItem value="likes">👍 좋아요순</SelectItem>
                   <SelectItem value="createdAt">🕐 생성일순</SelectItem>
                   <SelectItem value="views">👁️ 조회수순</SelectItem>
+                  <SelectItem value="copyCount">📋 복사순</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -1145,7 +1148,7 @@ const Index = () => {
                   key={role}
                   value={role}
                   aria-label={`${role} 선택`}
-                  className="border border-gray-300 dark:border-gray-600 data-[state=on]:bg-gradient-to-r data-[state=on]:from-[#A50034] data-[state=on]:to-[#8B002B] data-[state=on]:text-white data-[state=on]:border-[#A50034] hover:bg-red-100 dark:hover:bg-red-900/20"
+                  className="border border-gray-300 dark:border-gray-600 data-[state=on]:bg-gradient-to-r data-[state=on]:from-[#A50034] data-[state=on]:to-[#8B002B] data-[state=on]:text-white data-[state=on]:border-[#A50034] hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full px-6 py-2 h-auto"
                 >
                   {role}
                 </ToggleGroupItem>
