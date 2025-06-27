@@ -12,16 +12,21 @@ interface FilterDropdownProps {
   label: string;
   options: string[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string);
+  isRole?: boolean;
 }
 
-const FilterDropdown = ({ label, options, value, onChange }: FilterDropdownProps) => {
+const FilterDropdown = ({ label, options, value, onChange, isRole = false }: FilterDropdownProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 min-w-[100px] justify-between border-gray-300 dark:border-gray-600"
+          className={`flex items-center gap-2 justify-between border-gray-300 dark:border-gray-600 ${
+            isRole 
+              ? "min-w-[150px] rounded-2xl px-4 py-2" 
+              : "min-w-[100px]"
+          }`}
         >
           <span className="text-sm font-medium">{label}</span>
           <span className="text-xs text-gray-500 dark:text-gray-400">
