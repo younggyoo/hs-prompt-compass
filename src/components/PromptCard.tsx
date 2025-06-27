@@ -167,7 +167,7 @@ const PromptCard = ({
           )}
         </div>
         
-        <div className="flex justify-center items-center mt-auto pt-4">
+        <div className="flex items-center justify-center mt-auto pt-4">
           <Button
             onClick={handleCopy}
             size="lg"

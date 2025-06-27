@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,11 +140,8 @@ const PromptDialog = ({
           <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>
             <div 
-              className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm max-w-none"
+              className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: prompt.content }}
-              style={{
-                wordBreak: 'break-word'
-              }}
             />
           </div>
 
@@ -153,11 +149,8 @@ const PromptDialog = ({
             <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
               <h3 className="font-semibold text-[#A50034] dark:text-[#A50034] mb-3">✨ 프롬프트 결과</h3>
               <div 
-                className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed prose prose-sm max-w-none"
+                className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: prompt.result }}
-                style={{
-                  wordBreak: 'break-word'
-                }}
               />
             </div>
           )}
