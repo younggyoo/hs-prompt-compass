@@ -5,12 +5,14 @@ import PromptDialog from "@/components/PromptDialog";
 import VisitorCounter from "@/components/VisitorCounter";
 import AdminMode from "@/components/AdminMode";
 import PasswordDialog from "@/components/PasswordDialog";
+import LoginDialog from "@/components/LoginDialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
+import { User, Heart, FileText, LogOut } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -63,6 +65,14 @@ const Index = () => {
     description: '',
     onConfirm: () => {},
   });
+  
+  // 새로 추가된 상태들
+  const [currentUser, setCurrentUser] = useState<string | null>(() => {
+    return localStorage.getItem('hs-current-user');
+  });
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [viewFilter, setViewFilter] = useState<'all' | 'my' | 'liked'>('all');
+  
   const { toast } = useToast();
 
   // 로컬 스토리지에서 프롬프트 불러오기
@@ -828,6 +838,22 @@ const Index = () => {
     localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
   }, [likedPrompts]);
 
+  // 사용자 로그인 처리
+  const handleLogin = (username: string) => {
+    setCurrentUser(username);
+    localStorage.setItem('hs-current-user', username);
+  };
+
+  // 사용자 로그아웃 처리
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('hs-current-user');
+    setViewFilter('all');
+    toast({
+      title: "로그아웃되었습니다.",
+    });
+  };
+
   const handleCopy = (content: string, title: string) => {
     navigator.clipboard.writeText(content);
     
@@ -881,6 +907,29 @@ const Index = () => {
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
+      likes: 0,
+      views: 0,
+      copyCount: 0,
+      comments: [],
+      createdAt: new Date(),
+    };
+    setPrompts(prev => [newPrompt, ...prev]);
+  };
+
+  // 프롬프트 등록 시 현재 사용자 정보 추가
+  const addPromptWithUser = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
+    if (!currentUser) {
+      toast({
+        title: "로그인이 필요합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newPrompt: Prompt = {
+      ...newPromptData,
+      id: Date.now().toString(),
+      author: currentUser,
       likes: 0,
       views: 0,
       copyCount: 0,
@@ -1053,7 +1102,16 @@ const Index = () => {
       const matchesSearch = searchRegex.test(prompt.title) || searchRegex.test(prompt.description) || searchRegex.test(prompt.content);
       const matchesRole = selectedRole === "전체" || prompt.role === selectedRole;
       const matchesType = selectedType ? prompt.type === selectedType : true;
-      return matchesSearch && matchesRole && matchesType;
+      
+      // 새로운 필터 조건 추가
+      let matchesViewFilter = true;
+      if (viewFilter === 'my' && currentUser) {
+        matchesViewFilter = prompt.author === currentUser;
+      } else if (viewFilter === 'liked') {
+        matchesViewFilter = likedPrompts.includes(prompt.id);
+      }
+      
+      return matchesSearch && matchesRole && matchesType && matchesViewFilter;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -1073,7 +1131,34 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
         <div className="flex items-start justify-between mb-4">
-          <div></div>
+          <div className="flex items-center gap-4">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-[#A50034]" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {currentUser}님
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLoginOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                로그인
+              </Button>
+            )}
+          </div>
           <VisitorCounter />
         </div>
         
@@ -1125,15 +1210,45 @@ const Index = () => {
               </Select>
             </div>
 
-            <Button 
-              onClick={() => {
-                setEditPrompt(null);
-                setIsRegistrationOpen(true);
-              }}
-              className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
-            >
-              ➕ 새 프롬프트 등록
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button 
+                onClick={() => {
+                  if (!currentUser) {
+                    setIsLoginOpen(true);
+                    return;
+                  }
+                  setEditPrompt(null);
+                  setIsRegistrationOpen(true);
+                }}
+                className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
+              >
+                ➕ 새 프롬프트 등록
+              </Button>
+              
+              {currentUser && (
+                <div className="flex gap-2">
+                  <Button
+                    variant={viewFilter === 'my' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewFilter(viewFilter === 'my' ? 'all' : 'my')}
+                    className="flex items-center gap-1"
+                  >
+                    <FileText className="w-4 h-4" />
+                    내가 올린 프롬프트
+                  </Button>
+                  
+                  <Button
+                    variant={viewFilter === 'liked' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewFilter(viewFilter === 'liked' ? 'all' : 'liked')}
+                    className="flex items-center gap-1"
+                  >
+                    <Heart className="w-4 h-4" />
+                    좋아요한 프롬프트
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -1168,6 +1283,7 @@ const Index = () => {
               onEdit={handleEditPrompt}
               onDelete={handleDeletePrompt}
               isAdmin={isAdmin}
+              currentUser={currentUser}
               likedPrompts={likedPrompts}
             />
           ))}
@@ -1176,10 +1292,10 @@ const Index = () => {
         {filteredAndSortedPrompts.length === 0 && (
           <div className="text-center mt-8">
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              😔 검색 결과가 없습니다.
+              😔 {viewFilter === 'my' ? '등록한 프롬프트가' : viewFilter === 'liked' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              다른 검색어를 사용하거나 필터를 조정해보세요.
+              {viewFilter === 'my' ? '새 프롬프트를 등록해보세요.' : viewFilter === 'liked' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
             </p>
           </div>
         )}
@@ -1196,7 +1312,7 @@ const Index = () => {
           setIsRegistrationOpen(false);
           setEditPrompt(null);
         }}
-        onSubmit={editPrompt ? updatePrompt : addPrompt}
+        onSubmit={editPrompt ? updatePrompt : addPromptWithUser}
         editPrompt={editPrompt}
       />
 
@@ -1212,6 +1328,7 @@ const Index = () => {
         onEdit={handleEditPrompt}
         onDelete={handleDeletePrompt}
         isAdmin={isAdmin}
+        currentUser={currentUser}
         likedPrompts={likedPrompts}
       />
 
@@ -1221,6 +1338,12 @@ const Index = () => {
         onConfirm={passwordDialog.onConfirm}
         title={passwordDialog.title}
         description={passwordDialog.description}
+      />
+
+      <LoginDialog
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLogin={handleLogin}
       />
     </div>
   );
