@@ -44,6 +44,7 @@ interface PromptDialogProps {
   onEdit?: (prompt: Prompt) => void;
   onDelete?: (id: string) => void;
   isAdmin?: boolean;
+  currentUser?: string | null;
   likedPrompts?: string[];
 }
 
@@ -59,6 +60,7 @@ const PromptDialog = ({
   onEdit, 
   onDelete, 
   isAdmin = false,
+  currentUser = null,
   likedPrompts = []
 }: PromptDialogProps) => {
   const [copied, setCopied] = useState(false);
