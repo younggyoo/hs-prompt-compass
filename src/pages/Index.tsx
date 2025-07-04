@@ -334,7 +334,7 @@ const Index = () => {
                   className={`px-6 py-2 rounded-full transition-all duration-200 ${
                     selectedRole === role
                       ? "bg-[#A50034] hover:bg-[#8B002B] text-white shadow-md"
-                      : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-[#A50034] dark:hover:text-[#A50034] hover:border-[#A50034] dark:hover:border-[#A50034] bg-white/70 dark:bg-gray-800/70"
+                      : "border-gray-200 text-gray-400 hover:text-[#A50034] hover:border-[#A50034] bg-white/70 opacity-60 hover:opacity-100"
                   }`}
                 >
                   {role}
@@ -434,13 +434,15 @@ const Index = () => {
                 prompt={prompt}
                 onCopy={handleCopyToClipboard}
                 onLike={handleLikePrompt}
-                onView={() => {
+                onViewContent={() => {
                   handleViewPrompt(prompt.id);
                   setSelectedPrompt(prompt);
                 }}
                 onEdit={currentUser === prompt.author ? handleEditPrompt : undefined}
                 onDelete={currentUser === prompt.author ? handleDeletePrompt : undefined}
                 isAdmin={currentUser === 'admin'}
+                currentUser={currentUser}
+                likedPrompts={likedPrompts}
                 isLiked={likedPrompts.includes(prompt.id)}
               />
             ))}
