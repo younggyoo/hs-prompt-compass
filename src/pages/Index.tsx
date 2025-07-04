@@ -916,20 +916,12 @@ const Index = () => {
     setPrompts(prev => [newPrompt, ...prev]);
   };
 
-  // 프롬프트 등록 시 현재 사용자 정보 추가
+  // 프롬프트 등록 시 로그인 체크 제거
   const addPromptWithUser = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
-    if (!currentUser) {
-      toast({
-        title: "로그인이 필요합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
-      author: currentUser,
+      author: currentUser || "익명", // 로그인하지 않은 경우 "익명"으로 처리
       likes: 0,
       views: 0,
       copyCount: 0,
@@ -1213,10 +1205,6 @@ const Index = () => {
             <div className="flex flex-col gap-2">
               <Button 
                 onClick={() => {
-                  if (!currentUser) {
-                    setIsLoginOpen(true);
-                    return;
-                  }
                   setEditPrompt(null);
                   setIsRegistrationOpen(true);
                 }}
@@ -1263,7 +1251,13 @@ const Index = () => {
                   key={role}
                   value={role}
                   aria-label={`${role} 선택`}
-                  className="border border-gray-300 dark:border-gray-600 data-[state=on]:bg-gradient-to-r data-[state=on]:from-[#A50034] data-[state=on]:to-[#8B002B] data-[state=on]:text-white data-[state=on]:border-[#A50034] hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full px-6 py-2 h-auto"
+                  className={`
+                    border-2 rounded-full px-6 py-2 h-auto font-medium transition-all duration-200
+                    ${selectedRole === role 
+                      ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg' 
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700'
+                    }
+                  `}
                 >
                   {role}
                 </ToggleGroupItem>
