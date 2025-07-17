@@ -1086,7 +1086,7 @@ const Index = () => {
     }
   };
 
-  const roles = ["전체", "R&D", "기획", "구매", "생산", "SCM", "품질", "영업/마케팅", "공통"];
+  const roles = ["전체", "공통", "상품기획", "R&D", "품질", "구매", "SCM", "생산", "영업/마케팅"];
 
   const filteredAndSortedPrompts = prompts
     .filter(prompt => {
@@ -1193,11 +1193,17 @@ const Index = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">모든 타입</SelectItem>
-                  <SelectItem value="요약">요약</SelectItem>
+                  <SelectItem value="문서 작성">문서 작성</SelectItem>
+                  <SelectItem value="요약/정리">요약/정리</SelectItem>
                   <SelectItem value="번역">번역</SelectItem>
-                  <SelectItem value="작성">작성</SelectItem>
-                  <SelectItem value="분석">분석</SelectItem>
+                  <SelectItem value="검토/리뷰">검토/리뷰</SelectItem>
+                  <SelectItem value="자동화">자동화</SelectItem>
+                  <SelectItem value="질문/응답">질문/응답</SelectItem>
+                  <SelectItem value="양식화">양식화</SelectItem>
+                  <SelectItem value="분류/분석">분류/분석</SelectItem>
                   <SelectItem value="아이디어">아이디어</SelectItem>
+                  <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
+                  <SelectItem value="기타">기타</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1254,8 +1260,8 @@ const Index = () => {
                   className={`
                     border-2 rounded-full px-4 py-1.5 h-auto font-medium transition-all duration-200 text-sm
                     ${selectedRole === role 
-                      ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:text-white' 
-                      : 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] opacity-40 hover:opacity-60 [&>*]:text-white'
+                      ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white scale-75' 
+                      : 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] opacity-40 hover:opacity-60 [&>*]:!text-white scale-75'
                     }
                   `}
                 >
