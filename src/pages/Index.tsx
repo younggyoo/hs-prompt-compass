@@ -1275,7 +1275,7 @@ const Index = () => {
                   value={role}
                   aria-label={`${role} 선택`}
                   className={`
-                    border-2 rounded-full px-4 py-1.5 h-auto font-medium transition-all duration-200 text-base
+                    border-2 rounded-full px-3 py-1 h-auto font-medium transition-all duration-200 text-base
                     ${selectedRole === role 
                       ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]' 
                       : 'bg-transparent text-black border-[#A50034] hover:bg-[#A50034]/10 dark:text-white'
