@@ -1278,7 +1278,7 @@ const Index = () => {
                     border-2 rounded-full px-4 py-1.5 h-auto font-medium transition-all duration-200 text-sm
                     ${selectedRole === role 
                       ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]' 
-                      : 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] opacity-40 hover:opacity-60 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]'
+                      : 'bg-transparent text-black border-gray-400 hover:border-[#A50034] dark:text-white dark:border-gray-500 dark:hover:border-[#A50034]'
                     }
                   `}
                 >
