@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PromptRegistrationProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [result, setResult] = useState("");
-  const [tool, setTool] = useState("");
+  const [tool, setTool] = useState<string[]>([]);
   const [author, setAuthor] = useState("");
   const [password, setPassword] = useState("");
   
@@ -57,7 +58,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
       setDescription(editPrompt.description);
       setContent(editPrompt.content);
       setResult(editPrompt.result || "");
-      setTool(editPrompt.tool || "");
+      setTool(editPrompt.tool ? (typeof editPrompt.tool === 'string' ? editPrompt.tool.split(', ') : editPrompt.tool) : []);
       setAuthor(editPrompt.author);
       setPassword("");
     } else {
@@ -67,7 +68,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
       setDescription("");
       setContent("");
       setResult("");
-      setTool("");
+      setTool([]);
       setAuthor("");
       setPassword("");
     }
@@ -88,7 +89,7 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
       description: description.trim(),
       content: content.trim(),
       result: result.trim() || undefined,
-      tool: tool.trim() || undefined,
+      tool: tool.length > 0 ? tool.join(', ') : undefined,
       author: author.trim(),
       password: password.trim(),
     });
@@ -228,22 +229,39 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tool" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 🛠️ 사용 가능 Tool (선택사항)
               </Label>
-              <Select value={tool} onValueChange={setTool}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tool 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
-                  <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
-                  <SelectItem value="CHATDA">CHATDA</SelectItem>
-                  <SelectItem value="METIS">METIS</SelectItem>
-                  <SelectItem value="MS Copilot">MS Copilot</SelectItem>
-                  <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool (ChatGPT, Claude, Gemini 등)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-1 gap-2 p-3 border rounded-md">
+                {[
+                  "엘지니 AI",
+                  "Chat EXAONE", 
+                  "CHATDA",
+                  "METIS",
+                  "MS Copilot",
+                  "외부 Tool (ChatGPT, Claude, Gemini 등)"
+                ].map((toolOption) => (
+                  <div key={toolOption} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={toolOption}
+                      checked={tool.includes(toolOption)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setTool([...tool, toolOption]);
+                        } else {
+                          setTool(tool.filter(t => t !== toolOption));
+                        }
+                      }}
+                    />
+                    <Label 
+                      htmlFor={toolOption}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {toolOption}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
