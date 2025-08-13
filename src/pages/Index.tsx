@@ -45,6 +45,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("전체");
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("likes");
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -1094,6 +1095,7 @@ const Index = () => {
       const matchesSearch = searchRegex.test(prompt.title) || searchRegex.test(prompt.description) || searchRegex.test(prompt.content);
       const matchesRole = selectedRole === "전체" || prompt.role === selectedRole;
       const matchesType = selectedType ? prompt.type === selectedType : true;
+      const matchesTool = selectedTool ? prompt.tool?.includes(selectedTool) : true;
       
       // 새로운 필터 조건 추가
       let matchesViewFilter = true;
@@ -1103,7 +1105,7 @@ const Index = () => {
         matchesViewFilter = likedPrompts.includes(prompt.id);
       }
       
-      return matchesSearch && matchesRole && matchesType && matchesViewFilter;
+      return matchesSearch && matchesRole && matchesType && matchesTool && matchesViewFilter;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -1204,6 +1206,21 @@ const Index = () => {
                   <SelectItem value="아이디어">아이디어</SelectItem>
                   <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
                   <SelectItem value="기타">기타</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={value => setSelectedTool(value === "all" ? null : value)}>
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="🛠️ Tool 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 Tool</SelectItem>
+                  <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
+                  <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
+                  <SelectItem value="CHATDA">CHATDA</SelectItem>
+                  <SelectItem value="METIS">METIS</SelectItem>
+                  <SelectItem value="MS Copilot">MS Copilot</SelectItem>
+                  <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool</SelectItem>
                 </SelectContent>
               </Select>
             </div>
