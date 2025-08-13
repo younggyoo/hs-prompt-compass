@@ -231,12 +231,19 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
               <Label htmlFor="tool" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 🛠️ 사용 가능 Tool (선택사항)
               </Label>
-              <Input
-                id="tool"
-                placeholder="사용 가능한 도구를 입력해주세요 (예: ChatGPT, Claude, Gemini 등)"
-                value={tool}
-                onChange={(e) => setTool(e.target.value)}
-              />
+              <Select value={tool} onValueChange={setTool}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tool 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
+                  <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
+                  <SelectItem value="CHATDA">CHATDA</SelectItem>
+                  <SelectItem value="METIS">METIS</SelectItem>
+                  <SelectItem value="MS Copilot">MS Copilot</SelectItem>
+                  <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool (ChatGPT, Claude, Gemini 등)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
