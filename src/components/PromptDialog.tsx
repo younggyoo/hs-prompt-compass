@@ -149,16 +149,16 @@ const PromptDialog = ({
 
           <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">📄 프롬프트 내용</h3>
-            <div className="text-sm text-gray-700 dark:text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">
-              {extractTextFromHtml(prompt.content)}
+            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: prompt.content }} />
             </div>
           </div>
 
           {prompt.result && (
             <div className="bg-[#A50034]/5 dark:bg-[#A50034]/10 rounded-lg p-4 border border-[#A50034]/20 dark:border-[#A50034]/30">
               <h3 className="font-semibold text-[#A50034] dark:text-[#A50034] mb-3">✨ 프롬프트 결과</h3>
-              <div className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap">
-                {extractTextFromHtml(prompt.result)}
+              <div className="text-sm text-[#A50034] dark:text-[#A50034] leading-relaxed whitespace-pre-wrap prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: prompt.result }} />
               </div>
             </div>
           )}
