@@ -279,10 +279,13 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
                 required
               />
               {content.includes('<img') && (
-                <div 
-                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: content }}
-                />
+                <div className="border rounded-lg p-3 bg-gray-50 dark:bg-slate-700 max-h-80 overflow-y-auto">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">미리보기:</div>
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                </div>
               )}
             </div>
 
@@ -300,10 +303,13 @@ const PromptRegistration = ({ isOpen, onClose, onSubmit, editPrompt }: PromptReg
                 className="min-h-[100px] resize-none"
               />
               {result.includes('<img') && (
-                <div 
-                  className="border rounded-lg p-2 bg-gray-50 dark:bg-slate-700 max-h-40 overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: result }}
-                />
+                <div className="border rounded-lg p-3 bg-gray-50 dark:bg-slate-700 max-h-80 overflow-y-auto">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">미리보기:</div>
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: result }}
+                  />
+                </div>
               )}
             </div>
 
