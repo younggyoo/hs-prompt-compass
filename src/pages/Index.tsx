@@ -53,6 +53,7 @@ const Index = () => {
     incrementViews,
     incrementCopyCount,
     toggleLike,
+    isLiked,
     addComment: addCommentDb,
     updateComment: updateCommentDb,
     deleteComment: deleteCommentDb,
@@ -77,22 +78,13 @@ const Index = () => {
   };
 
   const handleLike = async (promptId: string) => {
-    const isCurrentlyLiked = likedPrompts.includes(promptId);
-    
-    // 로컬 좋아요 상태 업데이트
-    if (isCurrentlyLiked) {
-      setLikedPrompts(prev => prev.filter(id => id !== promptId));
-    } else {
-      setLikedPrompts(prev => [...prev, promptId]);
-    }
+    const currentlyLiked = isLiked(promptId);
+    await toggleLike(promptId, currentlyLiked);
 
-    // DB에 좋아요 상태 반영
-    await toggleLike(promptId, !isCurrentlyLiked);
-
-    // 다이얼로그가 열려있다면 업데이트
+    // 다이얼로그가 열려있다면 업데이트  
     if (selectedPrompt && selectedPrompt.id === promptId) {
-      const newLikes = isCurrentlyLiked ? Math.max(0, selectedPrompt.likes - 1) : selectedPrompt.likes + 1;
-      setSelectedPrompt(prev => prev ? { ...prev, likes: newLikes } : null);
+      const increment = currentlyLiked ? -1 : 1;
+      setSelectedPrompt(prev => prev ? { ...prev, likes: prev.likes + increment } : null);
     }
   };
 
@@ -446,7 +438,7 @@ const Index = () => {
               onEdit={handleEditPrompt}
               onDelete={handleDeletePrompt}
               isAdmin={isAdmin}
-              likedPrompts={likedPrompts}
+                      likedPrompts={isLiked(prompt.id) ? [prompt.id] : []}
             />
           ))}
         </div>
@@ -490,7 +482,7 @@ const Index = () => {
         onEdit={handleEditPrompt}
         onDelete={handleDeletePrompt}
         isAdmin={isAdmin}
-        likedPrompts={likedPrompts}
+        likedPrompts={[]} // Will use isLiked function instead
       />
 
       <PasswordDialog

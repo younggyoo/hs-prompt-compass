@@ -282,28 +282,31 @@ export const usePrompts = () => {
     }
   }
 
-  // 조회수 증가
+  // 조회수 증가 (중복 방지)
   const incrementViews = async (id: string) => {
     try {
-      // 현재 데이터베이스에서 최신 값을 가져와서 증가
-      const { data: currentPrompt, error: fetchError } = await supabase
-        .from('prompts')
-        .select('views')
-        .eq('id', id)
-        .single()
+      const viewedKey = `viewed_${id}`
+      const lastViewed = localStorage.getItem(viewedKey)
+      const now = Date.now()
+      
+      // 같은 세션에서 이미 조회했다면 카운트하지 않음 (30분 이내)
+      if (lastViewed && (now - parseInt(lastViewed)) < 30 * 60 * 1000) {
+        return
+      }
 
-      if (fetchError) throw fetchError
-
-      const { error } = await supabase
-        .from('prompts')
-        .update({ views: currentPrompt.views + 1 })
-        .eq('id', id)
+      // 원자적 증가를 위해 edge function 사용
+      const { data, error } = await supabase.functions.invoke('increment-counters', {
+        body: { id, field: 'views', increment: 1 }
+      })
 
       if (error) throw error
 
-      // 로컬 상태도 업데이트
+      // 조회 시간 기록
+      localStorage.setItem(viewedKey, now.toString())
+
+      // 로컬 상태 업데이트
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, views: currentPrompt.views + 1 } : p
+        p.id === id ? { ...p, views: p.views + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing views:', error)
@@ -313,61 +316,59 @@ export const usePrompts = () => {
   // 복사수 증가
   const incrementCopyCount = async (id: string) => {
     try {
-      // 현재 데이터베이스에서 최신 값을 가져와서 증가
-      const { data: currentPrompt, error: fetchError } = await supabase
-        .from('prompts')
-        .select('copy_count')
-        .eq('id', id)
-        .single()
-
-      if (fetchError) throw fetchError
-
-      const { error } = await supabase
-        .from('prompts')
-        .update({ copy_count: currentPrompt.copy_count + 1 })
-        .eq('id', id)
+      // 원자적 증가를 위해 edge function 사용
+      const { data, error } = await supabase.functions.invoke('increment-counters', {
+        body: { id, field: 'copy_count', increment: 1 }
+      })
 
       if (error) throw error
 
-      // 로컬 상태도 업데이트
+      // 로컬 상태 업데이트
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, copyCount: currentPrompt.copy_count + 1 } : p
+        p.id === id ? { ...p, copyCount: p.copyCount + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing copy count:', error)
     }
   }
 
-  // 좋아요 토글
-  const toggleLike = async (id: string, increment: boolean) => {
+  // 좋아요 토글 (사용자별 상태 추적)
+  const toggleLike = async (id: string, isCurrentlyLiked: boolean) => {
     try {
-      // 현재 데이터베이스에서 최신 값을 가져와서 증가/감소
-      const { data: currentPrompt, error: fetchError } = await supabase
-        .from('prompts')
-        .select('likes')
-        .eq('id', id)
-        .single()
-
-      if (fetchError) throw fetchError
-
-      const newLikes = increment ? currentPrompt.likes + 1 : Math.max(0, currentPrompt.likes - 1)
-
-      const { error } = await supabase
-        .from('prompts')
-        .update({ likes: newLikes })
-        .eq('id', id)
+      const likedKey = `liked_${id}`
+      const hasLiked = localStorage.getItem(likedKey) === 'true'
+      
+      // 현재 상태와 localStorage가 다르면 동기화
+      if (hasLiked !== isCurrentlyLiked) {
+        isCurrentlyLiked = hasLiked
+      }
+      
+      const increment = isCurrentlyLiked ? -1 : 1
+      
+      // 원자적 증가/감소를 위해 edge function 사용
+      const { data, error } = await supabase.functions.invoke('increment-counters', {
+        body: { id, field: 'likes', increment }
+      })
 
       if (error) throw error
 
-      // 로컬 상태도 업데이트
+      // localStorage 상태 업데이트
+      localStorage.setItem(likedKey, (!isCurrentlyLiked).toString())
+
+      // 로컬 상태 업데이트
       setPrompts(prev => prev.map(p => 
         p.id === id 
-          ? { ...p, likes: newLikes }
+          ? { ...p, likes: p.likes + increment }
           : p
       ))
     } catch (error) {
       console.error('Error toggling like:', error)
     }
+  }
+
+  // 좋아요 상태 확인 함수 추가
+  const isLiked = (id: string): boolean => {
+    return localStorage.getItem(`liked_${id}`) === 'true'
   }
 
   // 댓글 추가
@@ -515,6 +516,7 @@ export const usePrompts = () => {
     incrementViews,
     incrementCopyCount,
     toggleLike,
+    isLiked,
     addComment,
     updateComment,
     deleteComment,

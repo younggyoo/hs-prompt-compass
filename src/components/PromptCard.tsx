@@ -4,6 +4,7 @@ import { Copy, CheckCircle, ThumbsUp, Eye, MessageCircle, Edit, Trash2 } from "l
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { usePrompts } from "@/hooks/usePrompts";
 
 interface Comment {
   id: string;
@@ -53,6 +54,7 @@ const PromptCard = ({
   likedPrompts = []
 }: PromptCardProps) => {
   const [copied, setCopied] = useState(false);
+  const { isLiked: checkIsLiked } = usePrompts();
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -85,7 +87,7 @@ const PromptCard = ({
   };
 
   const canEditDelete = isAdmin || prompt.password; // 비밀번호가 있으면 수정/삭제 가능
-  const isLiked = likedPrompts.includes(prompt.id);
+  const isLiked = checkIsLiked(prompt.id);
 
   return (
     <Card 
