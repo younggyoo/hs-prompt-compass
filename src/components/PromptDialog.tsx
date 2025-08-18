@@ -79,7 +79,7 @@ const PromptDialog = ({
     onLike(prompt.id);
   };
 
-  const canEditDelete = isAdmin || prompt.password;
+  const canEditDelete = isAdmin || true; // 모든 사용자가 수정/삭제 시도 가능, 비밀번호는 클릭 시 확인
   const isLiked = likedPrompts.includes(prompt.id);
 
   // HTML에서 텍스트만 추출하는 함수
