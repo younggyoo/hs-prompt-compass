@@ -41,7 +41,6 @@ const Index = () => {
     onConfirm: () => {},
   });
   
-  
   const { toast } = useToast();
 
   // Supabase hooks 사용
@@ -62,7 +61,6 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
   }, [likedPrompts]);
-
 
   const handleCopy = async (content: string, title: string) => {
     navigator.clipboard.writeText(content);
@@ -339,6 +337,53 @@ const Index = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+
+              <Select onValueChange={setSortBy} defaultValue="좋아요순">
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="📈 정렬 기준" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="좋아요순">👍 좋아요순</SelectItem>
+                  <SelectItem value="생성일순">🕐 생성일순</SelectItem>
+                  <SelectItem value="조회수순">👁️ 조회수순</SelectItem>
+                  <SelectItem value="복사순">📋 복사순</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={value => setSelectedType(value === "모든 타입" ? null : value)}>
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="🏷️ 타입 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="모든 타입">모든 타입</SelectItem>
+                  <SelectItem value="문서 작성">문서 작성</SelectItem>
+                  <SelectItem value="요약/정리">요약/정리</SelectItem>
+                  <SelectItem value="번역">번역</SelectItem>
+                  <SelectItem value="검토/리뷰">검토/리뷰</SelectItem>
+                  <SelectItem value="자동화">자동화</SelectItem>
+                  <SelectItem value="질문/응답">질문/응답</SelectItem>
+                  <SelectItem value="양식화">양식화</SelectItem>
+                  <SelectItem value="분류/분석">분류/분석</SelectItem>
+                  <SelectItem value="아이디어">아이디어</SelectItem>
+                  <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
+                  <SelectItem value="기타">기타</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select onValueChange={value => setSelectedTool(value === "모든 Tool" ? null : value)}>
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="🛠️ Tool 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="모든 Tool">모든 Tool</SelectItem>
+                  <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
+                  <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
+                  <SelectItem value="CHATDA">CHATDA</SelectItem>
+                  <SelectItem value="METIS">METIS</SelectItem>
+                  <SelectItem value="MS Copilot">MS Copilot</SelectItem>
+                  <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -351,67 +396,16 @@ const Index = () => {
               >
                 ➕ 새 프롬프트 등록
               </Button>
-              
             </div>
-          </div>
-
-          {/* 필터 및 정렬 섹션 */}
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <Select onValueChange={setSortBy} defaultValue="좋아요순">
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="📈 정렬 기준" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="좋아요순">👍 좋아요순</SelectItem>
-                <SelectItem value="생성일순">🕐 생성일순</SelectItem>
-                <SelectItem value="조회수순">👁️ 조회수순</SelectItem>
-                <SelectItem value="복사순">📋 복사순</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={value => setSelectedType(value === "모든 타입" ? null : value)}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="🏷️ 타입 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="모든 타입">모든 타입</SelectItem>
-                <SelectItem value="문서 작성">문서 작성</SelectItem>
-                <SelectItem value="요약/정리">요약/정리</SelectItem>
-                <SelectItem value="번역">번역</SelectItem>
-                <SelectItem value="검토/리뷰">검토/리뷰</SelectItem>
-                <SelectItem value="자동화">자동화</SelectItem>
-                <SelectItem value="질문/응답">질문/응답</SelectItem>
-                <SelectItem value="양식화">양식화</SelectItem>
-                <SelectItem value="분류/분석">분류/분석</SelectItem>
-                <SelectItem value="아이디어">아이디어</SelectItem>
-                <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
-                <SelectItem value="기타">기타</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={value => setSelectedTool(value === "모든 Tool" ? null : value)}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="🛠️ Tool 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="모든 Tool">모든 Tool</SelectItem>
-                <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
-                <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
-                <SelectItem value="CHATDA">CHATDA</SelectItem>
-                <SelectItem value="METIS">METIS</SelectItem>
-                <SelectItem value="MS Copilot">MS Copilot</SelectItem>
-                <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-6 mb-8">
           <ToggleGroup 
             type="single" 
             value={selectedRole} 
             onValueChange={(value) => setSelectedRole(value || "전체")}
-            className="justify-start flex-wrap gap-2"
+            className="justify-start flex-wrap gap-4"
           >
             {roles.map((role) => (
               <ToggleGroupItem
@@ -419,14 +413,22 @@ const Index = () => {
                 value={role}
                 aria-label={`${role} 선택`}
                 className={`
-                  border-2 rounded-full px-3 py-1 h-auto font-medium transition-all duration-200 text-base
+                  border-2 rounded-full px-4 py-2 h-auto font-medium transition-all duration-200 text-base
                   ${selectedRole === role 
                     ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]' 
                     : 'bg-transparent text-black border-[#A50034] hover:bg-[#A50034]/10 dark:text-white'
                   }
                 `}
               >
-                {role}
+                {role === "R&D" ? "🧪 R&D" : 
+                 role === "품질" ? "🔍 품질" :
+                 role === "구매" ? "🛒 구매" :
+                 role === "SCM" ? "🚛 SCM" :
+                 role === "생산" ? "🏭 생산" :
+                 role === "영업/마케팅" ? "📈 영업/마케팅" :
+                 role === "상품기획" ? "💡 상품기획" :
+                 role === "공통" ? "👥 공통" :
+                 `🏢 ${role}`}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -449,14 +451,14 @@ const Index = () => {
         </div>
 
         {filteredAndSortedPrompts.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">
-                😔 검색 결과가 없습니다.
-              </p>
-              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                다른 검색어를 사용하거나 필터를 조정해보세요.
-              </p>
-            </div>
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
+              😔 검색 결과가 없습니다.
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+              다른 검색어를 사용하거나 필터를 조정해보세요.
+            </p>
+          </div>
         )}
       </main>
 
@@ -487,7 +489,6 @@ const Index = () => {
         onEdit={handleEditPrompt}
         onDelete={handleDeletePrompt}
         isAdmin={isAdmin}
-        
         likedPrompts={likedPrompts}
       />
 
@@ -498,7 +499,6 @@ const Index = () => {
         title={passwordDialog.title}
         description={passwordDialog.description}
       />
-
     </div>
   );
 };
