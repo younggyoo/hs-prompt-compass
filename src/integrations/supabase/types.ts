@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           author: string
@@ -48,13 +72,6 @@ export type Database = {
             columns: ["prompt_id"]
             isOneToOne: false
             referencedRelation: "prompts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_prompt_id_fkey"
-            columns: ["prompt_id"]
-            isOneToOne: false
-            referencedRelation: "prompts_public"
             referencedColumns: ["id"]
           },
         ]
@@ -139,99 +156,7 @@ export type Database = {
       }
     }
     Views: {
-      comments_public: {
-        Row: {
-          author: string | null
-          content: string | null
-          created_at: string | null
-          id: string | null
-          prompt_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          author?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string | null
-          prompt_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          author?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string | null
-          prompt_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_prompt_id_fkey"
-            columns: ["prompt_id"]
-            isOneToOne: false
-            referencedRelation: "prompts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_prompt_id_fkey"
-            columns: ["prompt_id"]
-            isOneToOne: false
-            referencedRelation: "prompts_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      prompts_public: {
-        Row: {
-          author: string | null
-          content: string | null
-          copy_count: number | null
-          created_at: string | null
-          description: string | null
-          id: string | null
-          likes: number | null
-          result: string | null
-          role: string | null
-          title: string | null
-          tool: string | null
-          type: string | null
-          updated_at: string | null
-          views: number | null
-        }
-        Insert: {
-          author?: string | null
-          content?: string | null
-          copy_count?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          likes?: number | null
-          result?: string | null
-          role?: string | null
-          title?: string | null
-          tool?: string | null
-          type?: string | null
-          updated_at?: string | null
-          views?: number | null
-        }
-        Update: {
-          author?: string | null
-          content?: string | null
-          copy_count?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          likes?: number | null
-          result?: string | null
-          role?: string | null
-          title?: string | null
-          tool?: string | null
-          type?: string | null
-          updated_at?: string | null
-          views?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       can_modify_comment: {
@@ -263,6 +188,10 @@ export type Database = {
         Returns: {
           new_value: number
         }[]
+      }
+      is_user_admin: {
+        Args: { user_uuid: string }
+        Returns: boolean
       }
       verify_password: {
         Args: { hashed_password: string; password_text: string }
