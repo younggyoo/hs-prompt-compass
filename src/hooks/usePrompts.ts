@@ -79,12 +79,16 @@ export const usePrompts = () => {
     try {
       const localPrompts = localStorage.getItem('hs-prompts')
       if (!localPrompts) {
+        // 로컬 데이터가 없으면 빈 배열로 설정하고 로딩 완료
+        setPrompts([])
         setLoading(false)
         return
       }
 
       const parsedPrompts = JSON.parse(localPrompts)
       if (!Array.isArray(parsedPrompts) || parsedPrompts.length === 0) {
+        // 파싱된 데이터가 없거나 빈 배열이면 빈 상태로 설정
+        setPrompts([])
         setLoading(false)
         return
       }
