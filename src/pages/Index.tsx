@@ -109,6 +109,7 @@ const Index = () => {
     password: string;
   }) => {
     try {
+      // 입력받은 promptData를 그대로 전달 (author 포함)
       await addPrompt(promptData);
     } catch (error) {
       console.error('Error adding prompt:', error);
