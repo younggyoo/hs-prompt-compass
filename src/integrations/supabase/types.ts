@@ -222,6 +222,16 @@ export type Database = {
         Args: { password_text: string }
         Returns: string
       }
+      increment_prompt_counter: {
+        Args: {
+          counter_field: string
+          increment_value?: number
+          prompt_id: string
+        }
+        Returns: {
+          new_value: number
+        }[]
+      }
       verify_password: {
         Args: { hashed_password: string; password_text: string }
         Returns: boolean
