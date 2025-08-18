@@ -113,6 +113,30 @@ export type Database = {
         }
         Relationships: []
       }
+      visitors: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          visit_count: number
+          visit_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          visit_count?: number
+          visit_date?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          visit_count?: number
+          visit_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       comments_public: {
@@ -218,9 +242,17 @@ export type Database = {
         Args: { prompt_id: string; provided_password: string }
         Returns: boolean
       }
+      get_daily_visitors: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       hash_password: {
         Args: { password_text: string }
         Returns: string
+      }
+      increment_daily_visitors: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       increment_prompt_counter: {
         Args: {
