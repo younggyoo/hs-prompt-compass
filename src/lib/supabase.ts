@@ -1,10 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Supabase credentials will be automatically injected by Lovable's Supabase integration
-const supabaseUrl = process.env.SUPABASE_URL || ''
-const supabaseKey = process.env.SUPABASE_ANON_KEY || ''
+// Use import.meta.env for Vite environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Only create client if we have valid credentials
+export const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null
 
 // Database types
 export interface DatabaseComment {
