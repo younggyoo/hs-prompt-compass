@@ -38,15 +38,16 @@ export const usePrompts = () => {
     try {
       setLoading(true)
       
+      // Use the secure public views that exclude password fields
       const { data: promptsData, error: promptsError } = await supabase
-        .from('prompts')
+        .from('prompts_public')
         .select('*')
         .order('created_at', { ascending: false })
 
       if (promptsError) throw promptsError
 
       const { data: commentsData, error: commentsError } = await supabase
-        .from('comments')
+        .from('comments_public')
         .select('*')
         .order('created_at', { ascending: true })
 
@@ -65,7 +66,7 @@ export const usePrompts = () => {
           result: prompt.result,
           tool: prompt.tool,
           author: prompt.author,
-          password: prompt.password,
+          password: undefined, // Never expose passwords
           likes: prompt.likes,
           views: prompt.views,
           copyCount: prompt.copy_count,
@@ -74,7 +75,7 @@ export const usePrompts = () => {
             id: comment.id,
             author: comment.author,
             content: comment.content,
-            password: comment.password,
+            password: undefined, // Never expose passwords
             createdAt: new Date(comment.created_at)
           }))
         }
@@ -95,6 +96,22 @@ export const usePrompts = () => {
   // 프롬프트 추가
   const addPrompt = async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     try {
+      let hashedPassword = null
+      
+      // Hash password if provided
+      if (promptData.password && promptData.password.trim() !== '') {
+        const { data, error } = await supabase.functions.invoke('hash-password', {
+          body: { password: promptData.password }
+        })
+        
+        if (error) {
+          console.error('Password hashing error:', error)
+          throw new Error('Failed to secure password')
+        }
+        
+        hashedPassword = data.hashedPassword
+      }
+
       const { data, error } = await supabase
         .from('prompts')
         .insert({
@@ -106,7 +123,7 @@ export const usePrompts = () => {
           result: promptData.result,
           tool: promptData.tool,
           author: promptData.author,
-          password: promptData.password,
+          password: hashedPassword,
           likes: 0,
           views: 0,
           copy_count: 0,
@@ -126,7 +143,7 @@ export const usePrompts = () => {
         result: data.result,
         tool: data.tool,
         author: data.author,
-        password: data.password,
+        password: undefined, // Never expose password in frontend state
         likes: data.likes,
         views: data.views,
         copyCount: data.copy_count,
@@ -151,29 +168,60 @@ export const usePrompts = () => {
     }
   }
 
-  // 프롬프트 업데이트
-  const updatePrompt = async (id: string, updates: Partial<Prompt>) => {
+  // 프롬프트 업데이트 (비밀번호 검증 필요한 경우)
+  const updatePrompt = async (id: string, updates: Partial<Prompt>, password?: string) => {
     try {
-      const dbUpdates: any = {}
-      if (updates.title !== undefined) dbUpdates.title = updates.title
-      if (updates.role !== undefined) dbUpdates.role = updates.role
-      if (updates.type !== undefined) dbUpdates.type = updates.type
-      if (updates.description !== undefined) dbUpdates.description = updates.description
-      if (updates.content !== undefined) dbUpdates.content = updates.content
-      if (updates.result !== undefined) dbUpdates.result = updates.result
-      if (updates.tool !== undefined) dbUpdates.tool = updates.tool
-      if (updates.author !== undefined) dbUpdates.author = updates.author
-      if (updates.password !== undefined) dbUpdates.password = updates.password
-      if (updates.likes !== undefined) dbUpdates.likes = updates.likes
-      if (updates.views !== undefined) dbUpdates.views = updates.views
-      if (updates.copyCount !== undefined) dbUpdates.copy_count = updates.copyCount
+      // If password is provided, use secure verification
+      if (password) {
+        const dbUpdates: any = {}
+        if (updates.title !== undefined) dbUpdates.title = updates.title
+        if (updates.role !== undefined) dbUpdates.role = updates.role
+        if (updates.type !== undefined) dbUpdates.type = updates.type
+        if (updates.description !== undefined) dbUpdates.description = updates.description
+        if (updates.content !== undefined) dbUpdates.content = updates.content
+        if (updates.result !== undefined) dbUpdates.result = updates.result
+        if (updates.tool !== undefined) dbUpdates.tool = updates.tool
+        if (updates.author !== undefined) dbUpdates.author = updates.author
+        if (updates.likes !== undefined) dbUpdates.likes = updates.likes
+        if (updates.views !== undefined) dbUpdates.views = updates.views
+        if (updates.copyCount !== undefined) dbUpdates.copy_count = updates.copyCount
 
-      const { error } = await supabase
-        .from('prompts')
-        .update(dbUpdates)
-        .eq('id', id)
+        const { data, error } = await supabase.functions.invoke('modify-with-password', {
+          body: { 
+            id, 
+            password, 
+            type: 'prompt', 
+            operation: 'update',
+            updates: dbUpdates
+          }
+        })
+        
+        if (error) {
+          console.error('Secure update error:', error)
+          throw new Error('Password verification failed')
+        }
+      } else {
+        // Direct update for admin operations or password-free prompts
+        const dbUpdates: any = {}
+        if (updates.title !== undefined) dbUpdates.title = updates.title
+        if (updates.role !== undefined) dbUpdates.role = updates.role
+        if (updates.type !== undefined) dbUpdates.type = updates.type
+        if (updates.description !== undefined) dbUpdates.description = updates.description
+        if (updates.content !== undefined) dbUpdates.content = updates.content
+        if (updates.result !== undefined) dbUpdates.result = updates.result
+        if (updates.tool !== undefined) dbUpdates.tool = updates.tool
+        if (updates.author !== undefined) dbUpdates.author = updates.author
+        if (updates.likes !== undefined) dbUpdates.likes = updates.likes
+        if (updates.views !== undefined) dbUpdates.views = updates.views
+        if (updates.copyCount !== undefined) dbUpdates.copy_count = updates.copyCount
 
-      if (error) throw error
+        const { error } = await supabase
+          .from('prompts')
+          .update(dbUpdates)
+          .eq('id', id)
+
+        if (error) throw error
+      }
 
       setPrompts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
 
@@ -190,15 +238,33 @@ export const usePrompts = () => {
     }
   }
 
-  // 프롬프트 삭제
-  const deletePrompt = async (id: string) => {
+  // 프롬프트 삭제 (비밀번호 검증 필요한 경우)
+  const deletePrompt = async (id: string, password?: string) => {
     try {
-      const { error } = await supabase
-        .from('prompts')
-        .delete()
-        .eq('id', id)
+      // If password is provided, use secure verification
+      if (password) {
+        const { data, error } = await supabase.functions.invoke('modify-with-password', {
+          body: { 
+            id, 
+            password, 
+            type: 'prompt', 
+            operation: 'delete'
+          }
+        })
+        
+        if (error) {
+          console.error('Secure delete error:', error)
+          throw new Error('Password verification failed')
+        }
+      } else {
+        // Direct delete for admin operations or password-free prompts
+        const { error } = await supabase
+          .from('prompts')
+          .delete()
+          .eq('id', id)
 
-      if (error) throw error
+        if (error) throw error
+      }
 
       setPrompts(prev => prev.filter(p => p.id !== id))
 
@@ -285,13 +351,29 @@ export const usePrompts = () => {
   // 댓글 추가
   const addComment = async (promptId: string, commentData: Omit<Comment, 'id' | 'createdAt'>) => {
     try {
+      let hashedPassword = null
+      
+      // Hash password if provided
+      if (commentData.password && commentData.password.trim() !== '') {
+        const { data, error } = await supabase.functions.invoke('hash-password', {
+          body: { password: commentData.password }
+        })
+        
+        if (error) {
+          console.error('Password hashing error:', error)
+          throw new Error('Failed to secure password')
+        }
+        
+        hashedPassword = data.hashedPassword
+      }
+
       const { data, error } = await supabase
         .from('comments')
         .insert({
           prompt_id: promptId,
           author: commentData.author,
           content: commentData.content,
-          password: commentData.password,
+          password: hashedPassword,
         })
         .select()
         .single()
@@ -302,7 +384,7 @@ export const usePrompts = () => {
         id: data.id,
         author: data.author,
         content: data.content,
-        password: data.password,
+        password: undefined, // Never expose password in frontend state
         createdAt: new Date(data.created_at)
       }
 
@@ -319,15 +401,34 @@ export const usePrompts = () => {
     }
   }
 
-  // 댓글 수정
-  const updateComment = async (commentId: string, content: string) => {
+  // 댓글 수정 (비밀번호 검증 필요한 경우)
+  const updateComment = async (commentId: string, content: string, password?: string) => {
     try {
-      const { error } = await supabase
-        .from('comments')
-        .update({ content })
-        .eq('id', commentId)
+      // If password is provided, use secure verification
+      if (password) {
+        const { data, error } = await supabase.functions.invoke('modify-with-password', {
+          body: { 
+            id: commentId, 
+            password, 
+            type: 'comment', 
+            operation: 'update',
+            updates: { content }
+          }
+        })
+        
+        if (error) {
+          console.error('Secure comment update error:', error)
+          throw new Error('Password verification failed')
+        }
+      } else {
+        // Direct update for admin operations or password-free comments
+        const { error } = await supabase
+          .from('comments')
+          .update({ content })
+          .eq('id', commentId)
 
-      if (error) throw error
+        if (error) throw error
+      }
 
       setPrompts(prev => prev.map(p => ({
         ...p,
@@ -341,15 +442,33 @@ export const usePrompts = () => {
     }
   }
 
-  // 댓글 삭제
-  const deleteComment = async (commentId: string) => {
+  // 댓글 삭제 (비밀번호 검증 필요한 경우)
+  const deleteComment = async (commentId: string, password?: string) => {
     try {
-      const { error } = await supabase
-        .from('comments')
-        .delete()
-        .eq('id', commentId)
+      // If password is provided, use secure verification
+      if (password) {
+        const { data, error } = await supabase.functions.invoke('modify-with-password', {
+          body: { 
+            id: commentId, 
+            password, 
+            type: 'comment', 
+            operation: 'delete'
+          }
+        })
+        
+        if (error) {
+          console.error('Secure comment delete error:', error)
+          throw new Error('Password verification failed')
+        }
+      } else {
+        // Direct delete for admin operations or password-free comments
+        const { error } = await supabase
+          .from('comments')
+          .delete()
+          .eq('id', commentId)
 
-      if (error) throw error
+        if (error) throw error
+      }
 
       setPrompts(prev => prev.map(p => ({
         ...p,
