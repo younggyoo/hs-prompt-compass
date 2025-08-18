@@ -99,18 +99,23 @@ export const usePrompts = () => {
     try {
       let hashedPassword = null
       
-      // Hash password if provided
+      // Hash password if provided using database function directly
       if (promptData.password && promptData.password.trim() !== '') {
-        const { data, error } = await supabase.functions.invoke('hash-password', {
-          body: { password: promptData.password }
-        })
-        
-        if (error) {
-          console.error('Password hashing error:', error)
-          throw new Error('Failed to secure password')
+        try {
+          const { data, error } = await supabase.rpc('hash_password', {
+            password_text: promptData.password
+          })
+          
+          if (error) {
+            console.error('Database password hashing error:', error)
+            throw new Error(`Password hashing failed: ${error.message}`)
+          }
+          
+          hashedPassword = data
+        } catch (rpcError) {
+          console.error('RPC password hashing failed:', rpcError)
+          throw new Error('비밀번호 보안 처리에 실패했습니다.')
         }
-        
-        hashedPassword = data.hashedPassword
       }
 
       const { data, error } = await supabase
@@ -403,18 +408,23 @@ export const usePrompts = () => {
     try {
       let hashedPassword = null
       
-      // Hash password if provided
+      // Hash password if provided using database function directly
       if (commentData.password && commentData.password.trim() !== '') {
-        const { data, error } = await supabase.functions.invoke('hash-password', {
-          body: { password: commentData.password }
-        })
-        
-        if (error) {
-          console.error('Password hashing error:', error)
-          throw new Error('Failed to secure password')
+        try {
+          const { data, error } = await supabase.rpc('hash_password', {
+            password_text: commentData.password
+          })
+          
+          if (error) {
+            console.error('Database password hashing error:', error)
+            throw new Error(`Password hashing failed: ${error.message}`)
+          }
+          
+          hashedPassword = data
+        } catch (rpcError) {
+          console.error('RPC password hashing failed:', rpcError)
+          throw new Error('비밀번호 보안 처리에 실패했습니다.')
         }
-        
-        hashedPassword = data.hashedPassword
       }
 
       const { data, error } = await supabase
