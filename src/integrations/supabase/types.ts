@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "prompts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comments_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       prompts: {
@@ -108,10 +115,117 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      comments_public: {
+        Row: {
+          author: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          prompt_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          prompt_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          prompt_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompts_public: {
+        Row: {
+          author: string | null
+          content: string | null
+          copy_count: number | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          likes: number | null
+          result: string | null
+          role: string | null
+          title: string | null
+          tool: string | null
+          type: string | null
+          updated_at: string | null
+          views: number | null
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          copy_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          likes?: number | null
+          result?: string | null
+          role?: string | null
+          title?: string | null
+          tool?: string | null
+          type?: string | null
+          updated_at?: string | null
+          views?: number | null
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          copy_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          likes?: number | null
+          result?: string | null
+          role?: string | null
+          title?: string | null
+          tool?: string | null
+          type?: string | null
+          updated_at?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      can_modify_comment: {
+        Args: { comment_id: string; provided_password: string }
+        Returns: boolean
+      }
+      can_modify_prompt: {
+        Args: { prompt_id: string; provided_password: string }
+        Returns: boolean
+      }
+      hash_password: {
+        Args: { password_text: string }
+        Returns: string
+      }
+      verify_password: {
+        Args: { hashed_password: string; password_text: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
