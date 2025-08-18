@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, transformPromptToDb, transformPromptFromDb, transformCommentToDb, transformCommentFromDb } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
 export interface Comment {
@@ -38,12 +38,6 @@ export const usePrompts = () => {
     try {
       setLoading(true)
       
-      // Supabase가 연결되지 않은 경우 로컬 데이터 사용
-      if (!supabase) {
-        await migrateLocalStorageData()
-        return
-      }
-      
       const { data: promptsData, error: promptsError } = await supabase
         .from('prompts')
         .select('*')
@@ -61,170 +55,85 @@ export const usePrompts = () => {
       // 프롬프트와 댓글을 결합
       const promptsWithComments = promptsData.map(prompt => {
         const promptComments = commentsData.filter(comment => comment.prompt_id === prompt.id)
-        return transformPromptFromDb({ ...prompt, comments: promptComments })
+        return {
+          id: prompt.id,
+          title: prompt.title,
+          role: prompt.role,
+          type: prompt.type,
+          description: prompt.description,
+          content: prompt.content,
+          result: prompt.result,
+          tool: prompt.tool,
+          author: prompt.author,
+          password: prompt.password,
+          likes: prompt.likes,
+          views: prompt.views,
+          copyCount: prompt.copy_count,
+          createdAt: new Date(prompt.created_at),
+          comments: promptComments.map(comment => ({
+            id: comment.id,
+            author: comment.author,
+            content: comment.content,
+            password: comment.password,
+            createdAt: new Date(comment.created_at)
+          }))
+        }
       })
 
       setPrompts(promptsWithComments)
     } catch (error) {
       console.error('Error loading prompts:', error)
-      // localStorage에서 백업 데이터 로드 시도
-      await migrateLocalStorageData()
+      toast({
+        title: "프롬프트 로드에 실패했습니다.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
-    }
-  }
-
-  // localStorage 데이터를 Supabase로 마이그레이션
-  const migrateLocalStorageData = async () => {
-    try {
-      const localPrompts = localStorage.getItem('hs-prompts')
-      if (!localPrompts) {
-        // 로컬 데이터가 없으면 빈 배열로 설정하고 로딩 완료
-        setPrompts([])
-        setLoading(false)
-        return
-      }
-
-      const parsedPrompts = JSON.parse(localPrompts)
-      if (!Array.isArray(parsedPrompts) || parsedPrompts.length === 0) {
-        // 파싱된 데이터가 없거나 빈 배열이면 빈 상태로 설정
-        setPrompts([])
-        setLoading(false)
-        return
-      }
-
-      // Supabase가 연결되지 않은 경우 로컬 데이터만 사용
-      if (!supabase) {
-        const promptsWithDates = parsedPrompts.map((p: any) => ({
-          ...p,
-          createdAt: new Date(p.createdAt),
-          comments: p.comments?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt)
-          })) || []
-        }))
-        setPrompts(promptsWithDates)
-        setLoading(false)
-        return
-      }
-
-      // 기존 데이터가 있는지 확인
-      const { data: existingData } = await supabase
-        .from('prompts')
-        .select('id')
-        .limit(1)
-
-      if (existingData && existingData.length > 0) {
-        // 이미 데이터가 있으면 로컬 데이터만 표시
-        const promptsWithDates = parsedPrompts.map((p: any) => ({
-          ...p,
-          createdAt: new Date(p.createdAt),
-          comments: p.comments?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt)
-          })) || []
-        }))
-        setPrompts(promptsWithDates)
-        return
-      }
-
-      // 프롬프트 마이그레이션
-      for (const prompt of parsedPrompts) {
-        const promptData = transformPromptToDb(prompt)
-        const { data: insertedPrompt, error: promptError } = await supabase
-          .from('prompts')
-          .insert(promptData)
-          .select()
-          .single()
-
-        if (promptError) {
-          console.error('Error inserting prompt:', promptError)
-          continue
-        }
-
-        // 댓글 마이그레이션
-        if (prompt.comments && prompt.comments.length > 0) {
-          const commentsData = prompt.comments.map((comment: any) => 
-            transformCommentToDb(comment, insertedPrompt.id)
-          )
-          
-          const { error: commentsError } = await supabase
-            .from('comments')
-            .insert(commentsData)
-
-          if (commentsError) {
-            console.error('Error inserting comments:', commentsError)
-          }
-        }
-      }
-
-      toast({
-        title: "로컬 데이터가 성공적으로 마이그레이션되었습니다.",
-      })
-
-      // 마이그레이션 후 다시 로드
-      await loadPrompts()
-    } catch (error) {
-      console.error('Migration error:', error)
-      // 마이그레이션 실패 시 로컬 데이터 사용
-      const localPrompts = localStorage.getItem('hs-prompts')
-      if (localPrompts) {
-        const parsedPrompts = JSON.parse(localPrompts)
-        const promptsWithDates = parsedPrompts.map((p: any) => ({
-          ...p,
-          createdAt: new Date(p.createdAt),
-          comments: p.comments?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt)
-          })) || []
-        }))
-        setPrompts(promptsWithDates)
-      }
     }
   }
 
   // 프롬프트 추가
   const addPrompt = async (promptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 저장소 사용
-      if (!supabase) {
-        const newPrompt: Prompt = {
-          ...promptData,
-          id: Date.now().toString(),
-          likes: 0,
-          views: 0,
-          copyCount: 0,
-          comments: [],
-          createdAt: new Date(),
-        }
-        setPrompts(prev => [newPrompt, ...prev])
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = [newPrompt, ...prompts]
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        
-        toast({
-          title: "프롬프트가 등록되었습니다. (로컬 저장)",
-        })
-        return newPrompt
-      }
-      
-      const dbPromptData = transformPromptToDb({
-        ...promptData,
-        likes: 0,
-        views: 0,
-        copyCount: 0,
-      })
-
       const { data, error } = await supabase
         .from('prompts')
-        .insert(dbPromptData)
+        .insert({
+          title: promptData.title,
+          role: promptData.role,
+          type: promptData.type,
+          description: promptData.description,
+          content: promptData.content,
+          result: promptData.result,
+          tool: promptData.tool,
+          author: promptData.author,
+          password: promptData.password,
+          likes: 0,
+          views: 0,
+          copy_count: 0,
+        })
         .select()
         .single()
 
       if (error) throw error
 
-      const newPrompt = transformPromptFromDb(data)
+      const newPrompt: Prompt = {
+        id: data.id,
+        title: data.title,
+        role: data.role,
+        type: data.type,
+        description: data.description,
+        content: data.content,
+        result: data.result,
+        tool: data.tool,
+        author: data.author,
+        password: data.password,
+        likes: data.likes,
+        views: data.views,
+        copyCount: data.copy_count,
+        comments: [],
+        createdAt: new Date(data.created_at)
+      }
+
       setPrompts(prev => [newPrompt, ...prev])
 
       toast({
@@ -245,26 +154,24 @@ export const usePrompts = () => {
   // 프롬프트 업데이트
   const updatePrompt = async (id: string, updates: Partial<Prompt>) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 업데이트
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => p.id === id ? { ...p, ...updates } : p)
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        
-        toast({
-          title: "프롬프트가 수정되었습니다. (로컬 저장)",
-        })
-        return
-      }
-      const dbUpdates = transformPromptToDb(updates)
-      const { data, error } = await supabase
+      const dbUpdates: any = {}
+      if (updates.title !== undefined) dbUpdates.title = updates.title
+      if (updates.role !== undefined) dbUpdates.role = updates.role
+      if (updates.type !== undefined) dbUpdates.type = updates.type
+      if (updates.description !== undefined) dbUpdates.description = updates.description
+      if (updates.content !== undefined) dbUpdates.content = updates.content
+      if (updates.result !== undefined) dbUpdates.result = updates.result
+      if (updates.tool !== undefined) dbUpdates.tool = updates.tool
+      if (updates.author !== undefined) dbUpdates.author = updates.author
+      if (updates.password !== undefined) dbUpdates.password = updates.password
+      if (updates.likes !== undefined) dbUpdates.likes = updates.likes
+      if (updates.views !== undefined) dbUpdates.views = updates.views
+      if (updates.copyCount !== undefined) dbUpdates.copy_count = updates.copyCount
+
+      const { error } = await supabase
         .from('prompts')
         .update(dbUpdates)
         .eq('id', id)
-        .select()
-        .single()
 
       if (error) throw error
 
@@ -286,27 +193,6 @@ export const usePrompts = () => {
   // 프롬프트 삭제
   const deletePrompt = async (id: string) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 삭제
-      if (!supabase) {
-        setPrompts(prev => prev.filter(p => p.id !== id))
-        
-        // 로컬 저장소에서 삭제
-        const updatedPrompts = prompts.filter(p => p.id !== id)
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        
-        toast({
-          title: "프롬프트가 삭제되었습니다. (로컬 저장)",
-        })
-        return
-      }
-
-      // 댓글 먼저 삭제
-      await supabase
-        .from('comments')
-        .delete()
-        .eq('prompt_id', id)
-
-      // 프롬프트 삭제
       const { error } = await supabase
         .from('prompts')
         .delete()
@@ -335,20 +221,6 @@ export const usePrompts = () => {
       const prompt = prompts.find(p => p.id === id)
       if (!prompt) return
 
-      // Supabase가 연결되지 않은 경우 로컬에서만 증가
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => 
-          p.id === id ? { ...p, views: p.views + 1 } : p
-        ))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => 
-          p.id === id ? { ...p, views: p.views + 1 } : p
-        )
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        return
-      }
-
       const { error } = await supabase
         .from('prompts')
         .update({ views: prompt.views + 1 })
@@ -369,20 +241,6 @@ export const usePrompts = () => {
     try {
       const prompt = prompts.find(p => p.id === id)
       if (!prompt) return
-
-      // Supabase가 연결되지 않은 경우 로컬에서만 증가
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => 
-          p.id === id ? { ...p, copyCount: p.copyCount + 1 } : p
-        ))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => 
-          p.id === id ? { ...p, copyCount: p.copyCount + 1 } : p
-        )
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        return
-      }
 
       const { error } = await supabase
         .from('prompts')
@@ -406,20 +264,6 @@ export const usePrompts = () => {
       if (!prompt) return
 
       const newLikes = increment ? prompt.likes + 1 : Math.max(0, prompt.likes - 1)
-      
-      // Supabase가 연결되지 않은 경우 로컬에서만 업데이트
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => 
-          p.id === id ? { ...p, likes: newLikes } : p
-        ))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => 
-          p.id === id ? { ...p, likes: newLikes } : p
-        )
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        return
-      }
 
       const { error } = await supabase
         .from('prompts')
@@ -441,41 +285,27 @@ export const usePrompts = () => {
   // 댓글 추가
   const addComment = async (promptId: string, commentData: Omit<Comment, 'id' | 'createdAt'>) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 댓글 추가
-      if (!supabase) {
-        const newComment: Comment = {
-          ...commentData,
-          id: Date.now().toString(),
-          createdAt: new Date(),
-        }
-        
-        setPrompts(prev => prev.map(p => 
-          p.id === promptId 
-            ? { ...p, comments: [...p.comments, newComment] }
-            : p
-        ))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => 
-          p.id === promptId 
-            ? { ...p, comments: [...p.comments, newComment] }
-            : p
-        )
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        
-        return newComment
-      }
-
-      const dbCommentData = transformCommentToDb(commentData, promptId)
       const { data, error } = await supabase
         .from('comments')
-        .insert(dbCommentData)
+        .insert({
+          prompt_id: promptId,
+          author: commentData.author,
+          content: commentData.content,
+          password: commentData.password,
+        })
         .select()
         .single()
 
       if (error) throw error
 
-      const newComment = transformCommentFromDb(data)
+      const newComment: Comment = {
+        id: data.id,
+        author: data.author,
+        content: data.content,
+        password: data.password,
+        createdAt: new Date(data.created_at)
+      }
+
       setPrompts(prev => prev.map(p => 
         p.id === promptId 
           ? { ...p, comments: [...p.comments, newComment] }
@@ -492,26 +322,6 @@ export const usePrompts = () => {
   // 댓글 수정
   const updateComment = async (commentId: string, content: string) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 댓글 수정
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => ({
-          ...p,
-          comments: p.comments.map(c => 
-            c.id === commentId ? { ...c, content } : c
-          )
-        })))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => ({
-          ...p,
-          comments: p.comments.map(c => 
-            c.id === commentId ? { ...c, content } : c
-          )
-        }))
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        return
-      }
-
       const { error } = await supabase
         .from('comments')
         .update({ content })
@@ -534,22 +344,6 @@ export const usePrompts = () => {
   // 댓글 삭제
   const deleteComment = async (commentId: string) => {
     try {
-      // Supabase가 연결되지 않은 경우 로컬 댓글 삭제
-      if (!supabase) {
-        setPrompts(prev => prev.map(p => ({
-          ...p,
-          comments: p.comments.filter(c => c.id !== commentId)
-        })))
-        
-        // 로컬 저장소에 저장
-        const updatedPrompts = prompts.map(p => ({
-          ...p,
-          comments: p.comments.filter(c => c.id !== commentId)
-        }))
-        localStorage.setItem('hs-prompts', JSON.stringify(updatedPrompts))
-        return
-      }
-
       const { error } = await supabase
         .from('comments')
         .delete()
