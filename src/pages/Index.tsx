@@ -12,33 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
+import { usePrompts, type Prompt, type Comment } from "@/hooks/usePrompts";
 import { User, Heart, FileText, LogOut } from "lucide-react";
-
-interface Comment {
-  id: string;
-  author: string;
-  content: string;
-  password?: string;
-  createdAt: Date;
-}
-
-interface Prompt {
-  id: string;
-  title: string;
-  role: string;
-  type: string;
-  description: string;
-  content: string;
-  result?: string;
-  tool?: string;
-  author: string;
-  password?: string;
-  likes: number;
-  views: number;
-  copyCount: number;
-  comments: Comment[];
-  createdAt: Date;
-}
 
 const Index = () => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -76,58 +51,20 @@ const Index = () => {
   
   const { toast } = useToast();
 
-  // 로컬 스토리지에서 프롬프트 불러오기 (사용자 생성 프롬프트만)
-  const [prompts, setPrompts] = useState<Prompt[]>(() => {
-    // 다양한 키에서 프롬프트 복원 시도
-    const possibleKeys = ['hs-prompts', 'hs-user-prompts', 'hs-user-prompts-v2', 'hs-prompts-backup'];
-    let allPrompts: any[] = [];
-    
-    for (const key of possibleKeys) {
-      const savedPrompts = localStorage.getItem(key);
-      if (savedPrompts) {
-        try {
-          const parsed = JSON.parse(savedPrompts);
-          if (Array.isArray(parsed)) {
-            allPrompts = [...allPrompts, ...parsed];
-          }
-        } catch (error) {
-          console.error(`Failed to parse saved prompts from ${key}:`, error);
-        }
-      }
-    }
-    
-    if (allPrompts.length > 0) {
-      // 중복 제거 (ID 기준)
-      const uniquePrompts = allPrompts.filter((prompt, index, arr) => 
-        arr.findIndex(p => p.id === prompt.id) === index
-      );
-      
-      // 기본 예시 프롬프트 필터링
-      const userPrompts = uniquePrompts.filter((p: any) => 
-        !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
-        parseInt(p.id) > 20
-      );
-      
-      return userPrompts.map((p: any) => ({
-        ...p,
-        copyCount: p.copyCount || 0,
-        createdAt: new Date(p.createdAt),
-        comments: p.comments?.map((c: any) => ({
-          ...c,
-          createdAt: new Date(c.createdAt)
-        })) || []
-      }));
-    }
-    
-    // 사용자 프롬프트가 없으면 빈 배열 반환 (기본 예시 프롬프트 제거)
-    return [];
-  });
-
-  // 프롬프트와 좋아요 목록이 변경될 때마다 로컬 스토리지에 저장
-  useEffect(() => {
-    localStorage.setItem('hs-prompts', JSON.stringify(prompts));
-    localStorage.setItem('hs-prompts-backup', JSON.stringify(prompts));
-  }, [prompts]);
+  // Supabase hooks 사용
+  const {
+    prompts,
+    loading,
+    addPrompt,
+    updatePrompt: updatePromptDb,
+    deletePrompt: deletePromptDb,
+    incrementViews,
+    incrementCopyCount,
+    toggleLike,
+    addComment: addCommentDb,
+    updateComment: updateCommentDb,
+    deleteComment: deleteCommentDb,
+  } = usePrompts();
 
   useEffect(() => {
     localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
@@ -149,159 +86,113 @@ const Index = () => {
     });
   };
 
-  const handleCopy = (content: string, title: string) => {
+  const handleCopy = async (content: string, title: string) => {
     navigator.clipboard.writeText(content);
     
-    // 복사수 증가
-    setPrompts(prevPrompts => 
-      prevPrompts.map(prompt =>
-        prompt.title === title 
-          ? { ...prompt, copyCount: (prompt.copyCount || 0) + 1 }
-          : prompt
-      )
-    );
+    // 복사수 증가 (DB에 반영)
+    const prompt = prompts.find(p => p.title === title);
+    if (prompt) {
+      await incrementCopyCount(prompt.id);
+    }
     
     toast({
       title: `${title} 내용이 복사되었습니다.`,
     });
   };
 
-  const handleLike = (promptId: string) => {
+  const handleLike = async (promptId: string) => {
     const isCurrentlyLiked = likedPrompts.includes(promptId);
     
+    // 로컬 좋아요 상태 업데이트
     if (isCurrentlyLiked) {
-      // 좋아요 취소
       setLikedPrompts(prev => prev.filter(id => id !== promptId));
-      setPrompts(prevPrompts => 
-        prevPrompts.map(prompt =>
-          prompt.id === promptId 
-            ? { ...prompt, likes: Math.max(0, prompt.likes - 1) }
-            : prompt
-        )
-      );
     } else {
-      // 좋아요 추가
       setLikedPrompts(prev => [...prev, promptId]);
-      setPrompts(prevPrompts => 
-        prevPrompts.map(prompt =>
-          prompt.id === promptId 
-            ? { ...prompt, likes: prompt.likes + 1 }
-            : prompt
-        )
-      );
     }
 
-    // 다이얼로그가 열려있고 현재 프롬프트가 좋아요 된 프롬프트라면 업데이트
+    // DB에 좋아요 상태 반영
+    await toggleLike(promptId, !isCurrentlyLiked);
+
+    // 다이얼로그가 열려있다면 업데이트
     if (selectedPrompt && selectedPrompt.id === promptId) {
       const newLikes = isCurrentlyLiked ? Math.max(0, selectedPrompt.likes - 1) : selectedPrompt.likes + 1;
       setSelectedPrompt(prev => prev ? { ...prev, likes: newLikes } : null);
     }
   };
 
-  // 프롬프트 등록 시 로그인 체크 제거
-  const addPromptWithUser = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
-    const newPrompt: Prompt = {
-      ...newPromptData,
-      id: Date.now().toString(),
-      author: currentUser || "익명", // 로그인하지 않은 경우 "익명"으로 처리
-      likes: 0,
-      views: 0,
-      copyCount: 0,
-      comments: [],
-      createdAt: new Date(),
-    };
-    setPrompts(prev => [newPrompt, ...prev]);
+  // 프롬프트 등록 시 Supabase 사용
+  const addPromptWithUser = async (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
+    try {
+      await addPrompt({
+        ...newPromptData,
+        author: currentUser || "익명", // 로그인하지 않은 경우 "익명"으로 처리
+      });
+    } catch (error) {
+      console.error('Error adding prompt:', error);
+    }
   };
 
-  const updatePrompt = (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
+  const updatePromptHandler = async (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     if (!editPrompt) return;
     
-    setPrompts(prevPrompts => 
-      prevPrompts.map(prompt =>
-        prompt.id === editPrompt.id 
-          ? { ...prompt, ...updatedPromptData }
-          : prompt
-      )
-    );
-    setEditPrompt(null);
+    try {
+      await updatePromptDb(editPrompt.id, updatedPromptData);
+      setEditPrompt(null);
+    } catch (error) {
+      console.error('Error updating prompt:', error);
+    }
   };
 
-  const handleViewContent = (prompt: Prompt) => {
-    // 조회수 증가
-    setPrompts(prevPrompts => 
-      prevPrompts.map(p =>
-        p.id === prompt.id 
-          ? { ...p, views: p.views + 1 }
-          : p
-      )
-    );
+  const handleViewContent = async (prompt: Prompt) => {
+    // 조회수 증가 (DB에 반영)
+    await incrementViews(prompt.id);
     
     setSelectedPrompt({ ...prompt, views: prompt.views + 1 });
     setIsDialogOpen(true);
   };
 
-  const handleAddComment = (promptId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => {
-    const newComment: Comment = {
-      ...comment,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
+  const handleAddComment = async (promptId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => {
+    try {
+      const newComment = await addCommentDb(promptId, comment);
 
-    setPrompts(prevPrompts => 
-      prevPrompts.map(prompt =>
-        prompt.id === promptId 
-          ? { ...prompt, comments: [...prompt.comments, newComment] }
-          : prompt
-      )
-    );
-
-    // 다이얼로그가 열려있다면 업데이트
-    if (selectedPrompt && selectedPrompt.id === promptId) {
-      setSelectedPrompt(prev => prev ? { ...prev, comments: [...prev.comments, newComment] } : null);
+      // 다이얼로그가 열려있다면 업데이트
+      if (selectedPrompt && selectedPrompt.id === promptId) {
+        setSelectedPrompt(prev => prev ? { ...prev, comments: [...prev.comments, newComment] } : null);
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
 
-  const handleEditComment = (promptId: string, commentId: string, content: string) => {
-    setPrompts(prevPrompts => 
-      prevPrompts.map(prompt =>
-        prompt.id === promptId 
-          ? { 
-              ...prompt, 
-              comments: prompt.comments.map(comment =>
-                comment.id === commentId ? { ...comment, content } : comment
-              )
-            }
-          : prompt
-      )
-    );
+  const handleEditComment = async (promptId: string, commentId: string, content: string) => {
+    try {
+      await updateCommentDb(commentId, content);
 
-    if (selectedPrompt && selectedPrompt.id === promptId) {
-      setSelectedPrompt(prev => prev ? {
-        ...prev,
-        comments: prev.comments.map(comment =>
-          comment.id === commentId ? { ...comment, content } : comment
-        )
-      } : null);
+      if (selectedPrompt && selectedPrompt.id === promptId) {
+        setSelectedPrompt(prev => prev ? {
+          ...prev,
+          comments: prev.comments.map(comment =>
+            comment.id === commentId ? { ...comment, content } : comment
+          )
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error);
     }
   };
 
-  const handleDeleteComment = (promptId: string, commentId: string) => {
-    setPrompts(prevPrompts => 
-      prevPrompts.map(prompt =>
-        prompt.id === promptId 
-          ? { 
-              ...prompt, 
-              comments: prompt.comments.filter(comment => comment.id !== commentId)
-            }
-          : prompt
-      )
-    );
+  const handleDeleteComment = async (promptId: string, commentId: string) => {
+    try {
+      await deleteCommentDb(commentId);
 
-    if (selectedPrompt && selectedPrompt.id === promptId) {
-      setSelectedPrompt(prev => prev ? {
-        ...prev,
-        comments: prev.comments.filter(comment => comment.id !== commentId)
-      } : null);
+      if (selectedPrompt && selectedPrompt.id === promptId) {
+        setSelectedPrompt(prev => prev ? {
+          ...prev,
+          comments: prev.comments.filter(comment => comment.id !== commentId)
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
     }
   };
 
@@ -332,17 +223,18 @@ const Index = () => {
     }
   };
 
-  const handleDeletePrompt = (promptId: string) => {
+  const handleDeletePrompt = async (promptId: string) => {
     const prompt = prompts.find(p => p.id === promptId);
     if (!prompt) return;
 
     if (isAdmin) {
       // 관리자는 바로 삭제 가능
       if (confirm('정말로 이 프롬프트를 삭제하시겠습니까?')) {
-        setPrompts(prev => prev.filter(p => p.id !== promptId));
-        toast({
-          title: "프롬프트가 삭제되었습니다.",
-        });
+        try {
+          await deletePromptDb(promptId);
+        } catch (error) {
+          console.error('Error deleting prompt:', error);
+        }
       }
     } else {
       // 일반 사용자는 비밀번호 확인 필요
@@ -350,13 +242,14 @@ const Index = () => {
         isOpen: true,
         title: '프롬프트 삭제',
         description: '프롬프트를 삭제하려면 비밀번호를 입력해주세요.',
-        onConfirm: (password) => {
+        onConfirm: async (password) => {
           if (password === prompt.password) {
-            setPrompts(prev => prev.filter(p => p.id !== promptId));
-            setPasswordDialog(prev => ({ ...prev, isOpen: false }));
-            toast({
-              title: "프롬프트가 삭제되었습니다.",
-            });
+            try {
+              await deletePromptDb(promptId);
+              setPasswordDialog(prev => ({ ...prev, isOpen: false }));
+            } catch (error) {
+              console.error('Error deleting prompt:', error);
+            }
           } else {
             toast({
               title: "비밀번호가 틀렸습니다.",
@@ -564,7 +457,7 @@ const Index = () => {
                         })) || []
                       }));
                       
-                      setPrompts(formattedPrompts);
+                      // 복원 버튼은 현재 Supabase 기반으로 동작하므로 제거하거나 다른 방식으로 처리
                       toast({
                         title: `${formattedPrompts.length}개의 프롬프트를 복원했습니다!`,
                         description: "수동 복원이 완료되었습니다."
@@ -680,7 +573,7 @@ const Index = () => {
           setIsRegistrationOpen(false);
           setEditPrompt(null);
         }}
-        onSubmit={editPrompt ? updatePrompt : addPromptWithUser}
+        onSubmit={editPrompt ? updatePromptHandler : addPromptWithUser}
         editPrompt={editPrompt}
       />
 
