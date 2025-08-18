@@ -38,17 +38,18 @@ export const usePrompts = () => {
     try {
       setLoading(true)
       
-      // Use the secure public views that exclude password fields
+      // 실제 prompts 테이블에서 직접 데이터 가져오기 (password 필드 제외)
       const { data: promptsData, error: promptsError } = await supabase
-        .from('prompts_public')
-        .select('*')
+        .from('prompts')
+        .select('id, title, role, type, description, content, result, tool, author, likes, views, copy_count, created_at, updated_at')
         .order('created_at', { ascending: false })
 
       if (promptsError) throw promptsError
 
+      // 댓글 데이터 가져오기 (password 필드 제외)
       const { data: commentsData, error: commentsError } = await supabase
-        .from('comments_public')
-        .select('*')
+        .from('comments')
+        .select('id, prompt_id, author, content, created_at, updated_at')
         .order('created_at', { ascending: true })
 
       if (commentsError) throw commentsError
