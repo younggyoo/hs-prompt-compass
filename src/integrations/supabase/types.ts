@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          author: string
+          content: string
+          created_at: string
+          id: string
+          password: string | null
+          prompt_id: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          content: string
+          created_at?: string
+          id?: string
+          password?: string | null
+          prompt_id: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          content?: string
+          created_at?: string
+          id?: string
+          password?: string | null
+          prompt_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompts: {
+        Row: {
+          author: string
+          content: string
+          copy_count: number
+          created_at: string
+          description: string | null
+          id: string
+          likes: number
+          password: string | null
+          result: string | null
+          role: string
+          title: string
+          tool: string | null
+          type: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author: string
+          content: string
+          copy_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes?: number
+          password?: string | null
+          result?: string | null
+          role: string
+          title: string
+          tool?: string | null
+          type: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author?: string
+          content?: string
+          copy_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          likes?: number
+          password?: string | null
+          result?: string | null
+          role?: string
+          title?: string
+          tool?: string | null
+          type?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
