@@ -21,7 +21,7 @@ const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string>("전체");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>("likes");
+  const [sortBy, setSortBy] = useState<string>("좋아요순");
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,7 +47,7 @@ const Index = () => {
     return localStorage.getItem('hs-current-user');
   });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [viewFilter, setViewFilter] = useState<'all' | 'my' | 'liked'>('all');
+  const [viewFilter, setViewFilter] = useState<'전체' | '내 프롬프트' | '좋아요한 프롬프트'>('전체');
   
   const { toast } = useToast();
 
@@ -80,7 +80,7 @@ const Index = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('hs-current-user');
-    setViewFilter('all');
+    setViewFilter('전체');
     toast({
       title: "로그아웃되었습니다.",
     });
@@ -273,9 +273,9 @@ const Index = () => {
       
       // 새로운 필터 조건 추가
       let matchesViewFilter = true;
-      if (viewFilter === 'my' && currentUser) {
+      if (viewFilter === '내 프롬프트' && currentUser) {
         matchesViewFilter = prompt.author === currentUser;
-      } else if (viewFilter === 'liked') {
+      } else if (viewFilter === '좋아요한 프롬프트') {
         matchesViewFilter = likedPrompts.includes(prompt.id);
       }
       
@@ -283,15 +283,16 @@ const Index = () => {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "likes":
+        case "좋아요순":
           return b.likes - a.likes;
-        case "views":
+        case "생성일순":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "조회수순":
           return b.views - a.views;
-        case "copyCount":
+        case "복사순":
           return (b.copyCount || 0) - (a.copyCount || 0);
-        case "createdAt":
         default:
-          return b.createdAt.getTime() - a.createdAt.getTime();
+          return b.likes - a.likes;
       }
     });
 
@@ -363,24 +364,24 @@ const Index = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
 
-              <Select onValueChange={setSortBy} defaultValue="likes">
+              <Select onValueChange={setSortBy} defaultValue="좋아요순">
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="📈 정렬 기준" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="likes">👍 좋아요순</SelectItem>
-                  <SelectItem value="createdAt">🕐 생성일순</SelectItem>
-                  <SelectItem value="views">👁️ 조회수순</SelectItem>
-                  <SelectItem value="copyCount">📋 복사순</SelectItem>
+                  <SelectItem value="좋아요순">👍 좋아요순</SelectItem>
+                  <SelectItem value="생성일순">🕐 생성일순</SelectItem>
+                  <SelectItem value="조회수순">👁️ 조회수순</SelectItem>
+                  <SelectItem value="복사순">📋 복사순</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={value => setSelectedType(value === "all" ? null : value)}>
+              <Select onValueChange={value => setSelectedType(value === "모든 타입" ? null : value)}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="🏷️ 타입 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">모든 타입</SelectItem>
+                  <SelectItem value="모든 타입">모든 타입</SelectItem>
                   <SelectItem value="문서 작성">문서 작성</SelectItem>
                   <SelectItem value="요약/정리">요약/정리</SelectItem>
                   <SelectItem value="번역">번역</SelectItem>
@@ -395,12 +396,12 @@ const Index = () => {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={value => setSelectedTool(value === "all" ? null : value)}>
+              <Select onValueChange={value => setSelectedTool(value === "모든 Tool" ? null : value)}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="🛠️ Tool 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">모든 Tool</SelectItem>
+                  <SelectItem value="모든 Tool">모든 Tool</SelectItem>
                   <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
                   <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
                   <SelectItem value="CHATDA">CHATDA</SelectItem>
@@ -495,54 +496,51 @@ const Index = () => {
               {currentUser && (
                 <div className="flex gap-2">
                   <Button
-                    variant={viewFilter === 'my' ? 'default' : 'outline'}
+                    variant={viewFilter === '내 프롬프트' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setViewFilter(viewFilter === 'my' ? 'all' : 'my')}
-                    className="flex items-center gap-1"
+                    onClick={() => setViewFilter(viewFilter === '내 프롬프트' ? '전체' : '내 프롬프트')}
+                    className="flex-1"
                   >
-                    <FileText className="w-4 h-4" />
-                    내가 올린 프롬프트
+                    📝 내 프롬프트
                   </Button>
-                  
                   <Button
-                    variant={viewFilter === 'liked' ? 'default' : 'outline'}
+                    variant={viewFilter === '좋아요한 프롬프트' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setViewFilter(viewFilter === 'liked' ? 'all' : 'liked')}
-                    className="flex items-center gap-1"
+                    onClick={() => setViewFilter(viewFilter === '좋아요한 프롬프트' ? '전체' : '좋아요한 프롬프트')}
+                    className="flex-1"
                   >
-                    <Heart className="w-4 h-4" />
-                    좋아요한 프롬프트
+                    ❤️ 좋아요한 프롬프트
                   </Button>
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <ToggleGroup 
-              type="single" 
-              value={selectedRole} 
-              onValueChange={(value) => setSelectedRole(value || "전체")}
-              className="justify-start flex-wrap gap-2"
-            >
-              {roles.map((role) => (
-                <ToggleGroupItem
-                  key={role}
-                  value={role}
-                  aria-label={`${role} 선택`}
-                  className={`
-                    border-2 rounded-full px-3 py-1 h-auto font-medium transition-all duration-200 text-base
-                    ${selectedRole === role 
-                      ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]' 
-                      : 'bg-transparent text-black border-[#A50034] hover:bg-[#A50034]/10 dark:text-white'
-                    }
-                  `}
-                >
-                  {role}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
+        <div className="flex flex-col gap-3">
+          <ToggleGroup 
+            type="single" 
+            value={selectedRole} 
+            onValueChange={(value) => setSelectedRole(value || "전체")}
+            className="justify-start flex-wrap gap-2"
+          >
+            {roles.map((role) => (
+              <ToggleGroupItem
+                key={role}
+                value={role}
+                aria-label={`${role} 선택`}
+                className={`
+                  border-2 rounded-full px-3 py-1 h-auto font-medium transition-all duration-200 text-base
+                  ${selectedRole === role 
+                    ? 'bg-gradient-to-r from-[#A50034] to-[#8B002B] text-white border-[#A50034] shadow-lg opacity-100 [&>*]:!text-white [text-shadow:1px_1px_2px_rgba(255,255,255,0.8)]' 
+                    : 'bg-transparent text-black border-[#A50034] hover:bg-[#A50034]/10 dark:text-white'
+                  }
+                `}
+              >
+                {role}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
@@ -563,14 +561,14 @@ const Index = () => {
         </div>
 
         {filteredAndSortedPrompts.length === 0 && (
-          <div className="text-center mt-8">
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              😔 {viewFilter === 'my' ? '등록한 프롬프트가' : viewFilter === 'liked' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-2">
-              {viewFilter === 'my' ? '새 프롬프트를 등록해보세요.' : viewFilter === 'liked' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
-            </p>
-          </div>
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">
+                😔 {viewFilter === '내 프롬프트' ? '등록한 프롬프트가' : viewFilter === '좋아요한 프롬프트' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                {viewFilter === '내 프롬프트' ? '새 프롬프트를 등록해보세요.' : viewFilter === '좋아요한 프롬프트' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
+              </p>
+            </div>
         )}
       </main>
 
