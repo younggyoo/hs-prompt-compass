@@ -23,6 +23,7 @@ interface Prompt {
   result?: string;
   tool?: string;
   author: string;
+  password?: string;
   likes: number;
   views: number;
   copyCount: number;
@@ -38,7 +39,6 @@ interface PromptCardProps {
   onEdit?: (prompt: Prompt) => void;
   onDelete?: (id: string) => void;
   isAdmin?: boolean;
-  currentUser?: string;
   likedPrompts?: string[];
 }
 
@@ -50,7 +50,6 @@ const PromptCard = ({
   onEdit, 
   onDelete, 
   isAdmin = false,
-  currentUser,
   likedPrompts = []
 }: PromptCardProps) => {
   const [copied, setCopied] = useState(false);
@@ -85,7 +84,7 @@ const PromptCard = ({
     onViewContent(prompt);
   };
 
-  const canEditDelete = isAdmin || (currentUser && currentUser === prompt.author);
+  const canEditDelete = isAdmin || prompt.password; // 비밀번호가 있으면 수정/삭제 가능
   const isLiked = likedPrompts.includes(prompt.id);
 
   return (
