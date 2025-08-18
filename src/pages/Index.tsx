@@ -126,11 +126,78 @@ const Index = () => {
   // 프롬프트와 좋아요 목록이 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
     localStorage.setItem('hs-prompts', JSON.stringify(prompts));
+    // 백업용으로 추가 키에도 저장
+    localStorage.setItem('hs-prompts-backup', JSON.stringify(prompts));
   }, [prompts]);
 
   useEffect(() => {
     localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
   }, [likedPrompts]);
+
+  // 프롬프트 복원 함수
+  useEffect(() => {
+    const restorePrompts = () => {
+      // 현재 프롬프트가 비어있으면 복원 시도
+      if (prompts.length === 0) {
+        const allKeys = Object.keys(localStorage);
+        const promptKeys = allKeys.filter(key => 
+          key.includes('prompt') || key.includes('hs-')
+        );
+        
+        console.log('Available localStorage keys:', promptKeys);
+        
+        let restoredPrompts: any[] = [];
+        
+        // 모든 가능한 키에서 데이터 수집
+        promptKeys.forEach(key => {
+          try {
+            const data = localStorage.getItem(key);
+            if (data) {
+              const parsed = JSON.parse(data);
+              if (Array.isArray(parsed)) {
+                restoredPrompts = [...restoredPrompts, ...parsed];
+              }
+            }
+          } catch (error) {
+            console.error(`Error parsing ${key}:`, error);
+          }
+        });
+        
+        if (restoredPrompts.length > 0) {
+          // 중복 제거 및 사용자 프롬프트만 필터링
+          const uniquePrompts = restoredPrompts
+            .filter((prompt, index, arr) => 
+              arr.findIndex(p => p.id === prompt.id) === index
+            )
+            .filter((p: any) => 
+              !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
+              parseInt(p.id) > 20
+            );
+          
+          if (uniquePrompts.length > 0) {
+            const formattedPrompts = uniquePrompts.map((p: any) => ({
+              ...p,
+              copyCount: p.copyCount || 0,
+              createdAt: new Date(p.createdAt),
+              comments: p.comments?.map((c: any) => ({
+                ...c,
+                createdAt: new Date(c.createdAt)
+              })) || []
+            }));
+            
+            setPrompts(formattedPrompts);
+            toast({
+              title: `${formattedPrompts.length}개의 프롬프트를 복원했습니다!`,
+              description: "데이터가 성공적으로 복원되었습니다."
+            });
+          }
+        }
+      }
+    };
+    
+    // 컴포넌트 마운트 시 복원 시도
+    setTimeout(restorePrompts, 100);
+  }, []);
 
   // 사용자 로그인 처리
   const handleLogin = (username: string) => {
@@ -527,6 +594,76 @@ const Index = () => {
                 className="bg-gradient-to-r from-[#A50034] via-[#B8003D] to-[#8B002B] hover:from-[#8B002B] hover:via-[#A50034] hover:to-[#730024] text-white shadow-xl hover:shadow-2xl"
               >
                 ➕ 새 프롬프트 등록
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // 수동 복원 버튼
+                  const allKeys = Object.keys(localStorage);
+                  const promptKeys = allKeys.filter(key => 
+                    key.includes('prompt') || key.includes('hs-')
+                  );
+                  
+                  let restoredPrompts: any[] = [];
+                  
+                  promptKeys.forEach(key => {
+                    try {
+                      const data = localStorage.getItem(key);
+                      if (data) {
+                        const parsed = JSON.parse(data);
+                        if (Array.isArray(parsed)) {
+                          restoredPrompts = [...restoredPrompts, ...parsed];
+                        }
+                      }
+                    } catch (error) {
+                      console.error(`Error parsing ${key}:`, error);
+                    }
+                  });
+                  
+                  if (restoredPrompts.length > 0) {
+                    const uniquePrompts = restoredPrompts
+                      .filter((prompt, index, arr) => 
+                        arr.findIndex(p => p.id === prompt.id) === index
+                      )
+                      .filter((p: any) => 
+                        !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
+                        parseInt(p.id) > 20
+                      );
+                    
+                    if (uniquePrompts.length > 0) {
+                      const formattedPrompts = uniquePrompts.map((p: any) => ({
+                        ...p,
+                        copyCount: p.copyCount || 0,
+                        createdAt: new Date(p.createdAt),
+                        comments: p.comments?.map((c: any) => ({
+                          ...c,
+                          createdAt: new Date(c.createdAt)
+                        })) || []
+                      }));
+                      
+                      setPrompts(formattedPrompts);
+                      toast({
+                        title: `${formattedPrompts.length}개의 프롬프트를 복원했습니다!`,
+                        description: "수동 복원이 완료되었습니다."
+                      });
+                    } else {
+                      toast({
+                        title: "복원할 프롬프트를 찾을 수 없습니다.",
+                        variant: "destructive"
+                      });
+                    }
+                  } else {
+                    toast({
+                      title: "localStorage에서 데이터를 찾을 수 없습니다.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="text-xs"
+              >
+                🔄 프롬프트 복원
               </Button>
               
               {currentUser && (
