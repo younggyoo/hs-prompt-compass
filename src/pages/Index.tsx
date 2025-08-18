@@ -52,7 +52,7 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [editPrompt, setEditPrompt] = useState<Prompt | null>(null);
   const [likedPrompts, setLikedPrompts] = useState<string[]>(() => {
-    const saved = localStorage.getItem('hs-liked-prompts');
+    const saved = localStorage.getItem('hs-liked-prompts-v2');
     return saved ? JSON.parse(saved) : [];
   });
   const [passwordDialog, setPasswordDialog] = useState<{
@@ -67,81 +67,101 @@ const Index = () => {
     onConfirm: () => {},
   });
   
-  // 새로 추가된 상태들
   const [currentUser, setCurrentUser] = useState<string | null>(() => {
-    return localStorage.getItem('hs-current-user');
+    return localStorage.getItem('hs-current-user-v2');
   });
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [viewFilter, setViewFilter] = useState<'all' | 'my' | 'liked'>('all');
   
   const { toast } = useToast();
 
-  // 사용자 프롬프트 복원 함수
+  // 기본 예시 프롬프트들을 식별하는 함수
+  const isDefaultPrompt = (prompt: any) => {
+    const defaultIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                       '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'];
+    const defaultAuthors = ['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통',
+                           '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매',
+                           '최SCM', '박영업', '연R&D', '김생산', '홍마케팅', '서문제해결',
+                           '성평가담당', '보안담당', '박연구원', '이디자이너', '최마케터',
+                           '정개발자', '한분석가'];
+    
+    return defaultIds.includes(prompt.id) || defaultAuthors.includes(prompt.author);
+  };
+
+  // 강화된 사용자 프롬프트 복원 함수
   const restoreUserPrompts = () => {
-    const savedPrompts = localStorage.getItem('hs-prompts');
-    if (savedPrompts) {
-      try {
-        const parsed = JSON.parse(savedPrompts);
-        const userCreatedPrompts = parsed.filter((p: any) => {
-          // 기본 예시 프롬프트들 제외
-          const isDefaultPrompt = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
-                                   '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'].includes(p.id) ||
-                                 p.author === '김기획' || p.author === '이R&D' || p.author === '박기획' ||
-                                 p.author === '최생산' || p.author === '김영업' || p.author === '이공통' ||
-                                 p.author === '박품질' || p.author === '정공통' || p.author === '한번역' ||
-                                 p.author === '차R&D' || p.author === '김프로젝트' || p.author === '이구매' ||
-                                 p.author === '최SCM' || p.author === '박영업' || p.author === '연R&D' ||
-                                 p.author === '김생산' || p.author === '홍마케팅' || p.author === '서문제해결' ||
-                                 p.author === '성평가담당' || p.author === '보안담당';
-          return !isDefaultPrompt;
-        });
-        
-        if (userCreatedPrompts.length > 0) {
-          localStorage.setItem('hs-user-prompts', JSON.stringify(userCreatedPrompts));
-          setPrompts(userCreatedPrompts.map((p: any) => ({
-            ...p,
-            copyCount: p.copyCount || 0,
-            createdAt: new Date(p.createdAt),
-            comments: p.comments?.map((c: any) => ({
-              ...c,
-              createdAt: new Date(c.createdAt)
-            })) || []
-          })));
-          
-          toast({
-            title: "프롬프트가 복원되었습니다.",
-            description: `${userCreatedPrompts.length}개의 프롬프트를 복원했습니다.`,
-          });
-        } else {
-          toast({
-            title: "복원할 프롬프트가 없습니다.",
-            description: "기존에 등록한 프롬프트를 찾을 수 없습니다.",
-          });
+    console.log('프롬프트 복원 시작...');
+    
+    // 여러 가능한 키에서 데이터 찾기
+    const possibleKeys = ['hs-prompts', 'hs-user-prompts', 'hs-prompts-backup'];
+    let allFoundPrompts: any[] = [];
+    
+    for (const key of possibleKeys) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            console.log(`${key}에서 ${parsed.length}개 프롬프트 발견`);
+            allFoundPrompts = [...allFoundPrompts, ...parsed];
+          }
+        } catch (error) {
+          console.error(`${key} 파싱 실패:`, error);
         }
-      } catch (error) {
-        console.error('Failed to restore prompts:', error);
-        toast({
-          title: "복원 중 오류가 발생했습니다.",
-          variant: "destructive",
-        });
       }
+    }
+    
+    // 중복 제거 및 사용자 프롬프트만 필터링
+    const uniqueUserPrompts = allFoundPrompts
+      .filter((prompt, index, arr) => 
+        // 중복 제거 (ID 기준)
+        arr.findIndex(p => p.id === prompt.id) === index
+      )
+      .filter(prompt => !isDefaultPrompt(prompt))
+      .map((p: any) => ({
+        ...p,
+        copyCount: p.copyCount || 0,
+        createdAt: new Date(p.createdAt),
+        comments: p.comments?.map((c: any) => ({
+          ...c,
+          createdAt: new Date(c.createdAt)
+        })) || []
+      }));
+    
+    console.log(`총 ${uniqueUserPrompts.length}개의 사용자 프롬프트 발견`);
+    
+    if (uniqueUserPrompts.length > 0) {
+      // 새로운 키로 백업
+      localStorage.setItem('hs-user-prompts-v2', JSON.stringify(uniqueUserPrompts));
+      setPrompts(uniqueUserPrompts);
+      
+      toast({
+        title: "✅ 프롬프트가 복원되었습니다!",
+        description: `${uniqueUserPrompts.length}개의 프롬프트를 성공적으로 복원했습니다.`,
+      });
+      
+      return true;
+    } else {
+      console.log('복원할 사용자 프롬프트를 찾을 수 없음');
+      toast({
+        title: "복원할 프롬프트가 없습니다.",
+        description: "기존에 등록한 프롬프트를 찾을 수 없습니다.",
+      });
+      
+      return false;
     }
   };
 
-  // 컴포넌트 마운트 시 자동으로 복원 시도
-  useEffect(() => {
-    if (prompts.length === 0) {
-      restoreUserPrompts();
-    }
-  }, []);
-
-  // 로컬 스토리지에서 프롬프트 불러오기
+  // 로컬 스토리지에서 프롬프트 불러오기 (새로운 키 사용)
   const [prompts, setPrompts] = useState<Prompt[]>(() => {
-    // 먼저 백업된 사용자 프롬프트를 확인
-    const userPrompts = localStorage.getItem('hs-user-prompts');
-    if (userPrompts) {
+    console.log('초기 프롬프트 로딩 시작...');
+    
+    // 먼저 새로운 키에서 확인
+    const userPromptsV2 = localStorage.getItem('hs-user-prompts-v2');
+    if (userPromptsV2) {
       try {
-        const parsed = JSON.parse(userPrompts);
+        const parsed = JSON.parse(userPromptsV2);
+        console.log(`hs-user-prompts-v2에서 ${parsed.length}개 프롬프트 로드`);
         return parsed.map((p: any) => ({
           ...p,
           copyCount: p.copyCount || 0,
@@ -152,67 +172,47 @@ const Index = () => {
           })) || []
         }));
       } catch (error) {
-        console.error('Failed to parse user prompts:', error);
+        console.error('hs-user-prompts-v2 파싱 실패:', error);
       }
     }
     
-    // 기존 프롬프트 데이터 확인
-    const savedPrompts = localStorage.getItem('hs-prompts');
-    if (savedPrompts) {
-      try {
-        const parsed = JSON.parse(savedPrompts);
-        // 기본 예시 프롬프트 제외하고 사용자가 실제 작성한 프롬프트만 필터링
-        const userCreatedPrompts = parsed.filter((p: any) => {
-          // 기본 예시 프롬프트들은 특정 ID나 패턴을 가지므로 제외
-          const isDefaultPrompt = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
-                                   '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'].includes(p.id) ||
-                                 p.author === '김기획' || p.author === '박연구원' || p.author === '이디자이너' ||
-                                 p.author === '최마케터' || p.author === '정개발자' || p.author === '한분석가';
-          return !isDefaultPrompt;
-        });
-        
-        if (userCreatedPrompts.length > 0) {
-          // 사용자 프롬프트를 백업용 키에 저장
-          localStorage.setItem('hs-user-prompts', JSON.stringify(userCreatedPrompts));
-          
-          return userCreatedPrompts.map((p: any) => ({
-            ...p,
-            copyCount: p.copyCount || 0,
-            createdAt: new Date(p.createdAt),
-            comments: p.comments?.map((c: any) => ({
-              ...c,
-              createdAt: new Date(c.createdAt)
-            })) || []
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to parse saved prompts:', error);
-      }
-    }
-    
-    // 사용자 프롬프트가 없으면 빈 배열로 시작
+    console.log('새로운 키에서 프롬프트를 찾을 수 없음, 복원 시도 예정');
     return [];
   });
 
-  // 프롬프트와 좋아요 목록이 변경될 때마다 로컬 스토리지에 저장
+  // 컴포넌트 마운트 시 자동 복원
   useEffect(() => {
-    localStorage.setItem('hs-prompts', JSON.stringify(prompts));
+    if (prompts.length === 0) {
+      console.log('프롬프트가 없어서 자동 복원 시도');
+      const timer = setTimeout(() => {
+        restoreUserPrompts();
+      }, 1000); // 1초 후 복원 시도
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // 프롬프트와 좋아요 목록이 변경될 때마다 새로운 키로 저장
+  useEffect(() => {
+    if (prompts.length > 0) {
+      localStorage.setItem('hs-user-prompts-v2', JSON.stringify(prompts));
+    }
   }, [prompts]);
 
   useEffect(() => {
-    localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
+    localStorage.setItem('hs-liked-prompts-v2', JSON.stringify(likedPrompts));
   }, [likedPrompts]);
 
   // 사용자 로그인 처리
   const handleLogin = (username: string) => {
     setCurrentUser(username);
-    localStorage.setItem('hs-current-user', username);
+    localStorage.setItem('hs-current-user-v2', username);
   };
 
   // 사용자 로그아웃 처리
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('hs-current-user');
+    localStorage.removeItem('hs-current-user-v2');
     setViewFilter('all');
     toast({
       title: "로그아웃되었습니다.",
@@ -281,12 +281,11 @@ const Index = () => {
     setPrompts(prev => [newPrompt, ...prev]);
   };
 
-  // 프롬프트 등록 시 로그인 체크 제거
   const addPromptWithUser = (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
     const newPrompt: Prompt = {
       ...newPromptData,
       id: Date.now().toString(),
-      author: currentUser || "익명", // 로그인하지 않은 경우 "익명"으로 처리
+      author: currentUser || "익명",
       likes: 0,
       views: 0,
       copyCount: 0,
@@ -461,7 +460,6 @@ const Index = () => {
       const matchesType = selectedType ? prompt.type === selectedType : true;
       const matchesTool = selectedTool ? prompt.tool?.includes(selectedTool) : true;
       
-      // 새로운 필터 조건 추가
       let matchesViewFilter = true;
       if (viewFilter === 'my' && currentUser) {
         matchesViewFilter = prompt.author === currentUser;
@@ -527,6 +525,17 @@ const Index = () => {
           💡 업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
           ✨ 검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
         </p>
+        
+        <div className="text-center mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={restoreUserPrompts}
+            className="text-[#A50034] border-[#A50034] hover:bg-[#A50034] hover:text-white"
+          >
+            📥 기존 프롬프트 다시 불러오기
+          </Button>
+        </div>
       </header>
       
       <main className="container mx-auto px-4 py-8">
@@ -678,11 +687,19 @@ const Index = () => {
             <p className="text-gray-500 dark:text-gray-400 mt-2">
               {viewFilter === 'my' ? '새 프롬프트를 등록해보세요.' : viewFilter === 'liked' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
             </p>
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                onClick={restoreUserPrompts}
+                className="text-[#A50034] border-[#A50034] hover:bg-[#A50034] hover:text-white"
+              >
+                📥 기존 프롬프트 복원해보기
+              </Button>
+            </div>
           </div>
         )}
       </main>
 
-      {/* 관리자 모드 버튼을 하단에 배치 */}
       <div className="fixed bottom-4 left-4">
         <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} prompts={prompts} />
       </div>
