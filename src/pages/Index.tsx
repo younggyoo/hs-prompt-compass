@@ -5,7 +5,6 @@ import PromptDialog from "@/components/PromptDialog";
 import VisitorCounter from "@/components/VisitorCounter";
 import AdminMode from "@/components/AdminMode";
 import PasswordDialog from "@/components/PasswordDialog";
-import LoginDialog from "@/components/LoginDialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
 import { usePrompts, type Prompt, type Comment } from "@/hooks/usePrompts";
-import { User, Heart, FileText, LogOut } from "lucide-react";
+import { Heart, FileText } from "lucide-react";
 
 const Index = () => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -42,12 +41,6 @@ const Index = () => {
     onConfirm: () => {},
   });
   
-  // 새로 추가된 상태들
-  const [currentUser, setCurrentUser] = useState<string | null>(() => {
-    return localStorage.getItem('hs-current-user');
-  });
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [viewFilter, setViewFilter] = useState<'전체' | '내 프롬프트' | '좋아요한 프롬프트'>('전체');
   
   const { toast } = useToast();
 
@@ -70,21 +63,6 @@ const Index = () => {
     localStorage.setItem('hs-liked-prompts', JSON.stringify(likedPrompts));
   }, [likedPrompts]);
 
-  // 사용자 로그인 처리
-  const handleLogin = (username: string) => {
-    setCurrentUser(username);
-    localStorage.setItem('hs-current-user', username);
-  };
-
-  // 사용자 로그아웃 처리
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('hs-current-user');
-    setViewFilter('전체');
-    toast({
-      title: "로그아웃되었습니다.",
-    });
-  };
 
   const handleCopy = async (content: string, title: string) => {
     navigator.clipboard.writeText(content);
@@ -121,22 +99,48 @@ const Index = () => {
   };
 
   // 프롬프트 등록 시 Supabase 사용
-  const addPromptWithUser = async (newPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
+  const addPromptWithUser = async (promptData: {
+    title: string;
+    role: string;
+    type: string;
+    description: string;
+    content: string;
+    result?: string;
+    tool?: string;
+    author: string;
+    password: string;
+  }) => {
     try {
-      await addPrompt({
-        ...newPromptData,
-        author: currentUser || "익명", // 로그인하지 않은 경우 "익명"으로 처리
-      });
+      await addPrompt(promptData);
     } catch (error) {
       console.error('Error adding prompt:', error);
     }
   };
 
-  const updatePromptHandler = async (updatedPromptData: Omit<Prompt, 'id' | 'createdAt' | 'likes' | 'views' | 'comments' | 'copyCount'>) => {
+  const updatePromptHandler = async (promptData: {
+    title: string;
+    role: string;
+    type: string;
+    description: string;
+    content: string;
+    result?: string;
+    tool?: string;
+    author: string;
+    password: string;
+  }) => {
     if (!editPrompt) return;
     
     try {
-      await updatePromptDb(editPrompt.id, updatedPromptData);
+      await updatePromptDb(editPrompt.id, {
+        title: promptData.title,
+        role: promptData.role,
+        type: promptData.type,
+        description: promptData.description,
+        content: promptData.content,
+        result: promptData.result,
+        tool: promptData.tool,
+        author: promptData.author
+      }, promptData.password);
       setEditPrompt(null);
     } catch (error) {
       console.error('Error updating prompt:', error);
@@ -207,12 +211,24 @@ const Index = () => {
         isOpen: true,
         title: '프롬프트 수정',
         description: '프롬프트를 수정하려면 비밀번호를 입력해주세요.',
-        onConfirm: (password) => {
-          if (password === prompt.password) {
+        onConfirm: async (password) => {
+          try {
+            // Edge function을 통해 비밀번호 검증
+            await updatePromptDb(prompt.id, {
+              title: prompt.title,
+              role: prompt.role,
+              type: prompt.type,
+              description: prompt.description,
+              content: prompt.content,
+              result: prompt.result,
+              tool: prompt.tool,
+              author: prompt.author
+            }, password);
+            
             setEditPrompt(prompt);
             setIsRegistrationOpen(true);
             setPasswordDialog(prev => ({ ...prev, isOpen: false }));
-          } else {
+          } catch (error) {
             toast({
               title: "비밀번호가 틀렸습니다.",
               variant: "destructive",
@@ -243,14 +259,10 @@ const Index = () => {
         title: '프롬프트 삭제',
         description: '프롬프트를 삭제하려면 비밀번호를 입력해주세요.',
         onConfirm: async (password) => {
-          if (password === prompt.password) {
-            try {
-              await deletePromptDb(promptId);
-              setPasswordDialog(prev => ({ ...prev, isOpen: false }));
-            } catch (error) {
-              console.error('Error deleting prompt:', error);
-            }
-          } else {
+          try {
+            await deletePromptDb(promptId, password);
+            setPasswordDialog(prev => ({ ...prev, isOpen: false }));
+          } catch (error) {
             toast({
               title: "비밀번호가 틀렸습니다.",
               variant: "destructive",
@@ -271,15 +283,7 @@ const Index = () => {
       const matchesType = selectedType ? prompt.type === selectedType : true;
       const matchesTool = selectedTool ? prompt.tool?.includes(selectedTool) : true;
       
-      // 새로운 필터 조건 추가
-      let matchesViewFilter = true;
-      if (viewFilter === '내 프롬프트' && currentUser) {
-        matchesViewFilter = prompt.author === currentUser;
-      } else if (viewFilter === '좋아요한 프롬프트') {
-        matchesViewFilter = likedPrompts.includes(prompt.id);
-      }
-      
-      return matchesSearch && matchesRole && matchesType && matchesTool && matchesViewFilter;
+      return matchesSearch && matchesRole && matchesType && matchesTool;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -312,34 +316,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-4">
-            {currentUser ? (
-              <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-[#A50034]" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {currentUser}님
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-red-500"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsLoginOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <User className="w-4 h-4" />
-                로그인
-              </Button>
-            )}
-          </div>
           <VisitorCounter />
         </div>
         
@@ -363,53 +339,6 @@ const Index = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-
-              <Select onValueChange={setSortBy} defaultValue="좋아요순">
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="📈 정렬 기준" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="좋아요순">👍 좋아요순</SelectItem>
-                  <SelectItem value="생성일순">🕐 생성일순</SelectItem>
-                  <SelectItem value="조회수순">👁️ 조회수순</SelectItem>
-                  <SelectItem value="복사순">📋 복사순</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select onValueChange={value => setSelectedType(value === "모든 타입" ? null : value)}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="🏷️ 타입 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="모든 타입">모든 타입</SelectItem>
-                  <SelectItem value="문서 작성">문서 작성</SelectItem>
-                  <SelectItem value="요약/정리">요약/정리</SelectItem>
-                  <SelectItem value="번역">번역</SelectItem>
-                  <SelectItem value="검토/리뷰">검토/리뷰</SelectItem>
-                  <SelectItem value="자동화">자동화</SelectItem>
-                  <SelectItem value="질문/응답">질문/응답</SelectItem>
-                  <SelectItem value="양식화">양식화</SelectItem>
-                  <SelectItem value="분류/분석">분류/분석</SelectItem>
-                  <SelectItem value="아이디어">아이디어</SelectItem>
-                  <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
-                  <SelectItem value="기타">기타</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select onValueChange={value => setSelectedTool(value === "모든 Tool" ? null : value)}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="🛠️ Tool 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="모든 Tool">모든 Tool</SelectItem>
-                  <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
-                  <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
-                  <SelectItem value="CHATDA">CHATDA</SelectItem>
-                  <SelectItem value="METIS">METIS</SelectItem>
-                  <SelectItem value="MS Copilot">MS Copilot</SelectItem>
-                  <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -423,97 +352,57 @@ const Index = () => {
                 ➕ 새 프롬프트 등록
               </Button>
               
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // 수동 복원 버튼
-                  const allKeys = Object.keys(localStorage);
-                  const promptKeys = allKeys.filter(key => 
-                    key.includes('prompt') || key.includes('hs-')
-                  );
-                  
-                  let restoredPrompts: any[] = [];
-                  
-                  promptKeys.forEach(key => {
-                    try {
-                      const data = localStorage.getItem(key);
-                      if (data) {
-                        const parsed = JSON.parse(data);
-                        if (Array.isArray(parsed)) {
-                          restoredPrompts = [...restoredPrompts, ...parsed];
-                        }
-                      }
-                    } catch (error) {
-                      console.error(`Error parsing ${key}:`, error);
-                    }
-                  });
-                  
-                  if (restoredPrompts.length > 0) {
-                    const uniquePrompts = restoredPrompts
-                      .filter((prompt, index, arr) => 
-                        arr.findIndex(p => p.id === prompt.id) === index
-                      )
-                      .filter((p: any) => 
-                        !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
-                        parseInt(p.id) > 20
-                      );
-                    
-                    if (uniquePrompts.length > 0) {
-                      const formattedPrompts = uniquePrompts.map((p: any) => ({
-                        ...p,
-                        copyCount: p.copyCount || 0,
-                        createdAt: new Date(p.createdAt),
-                        comments: p.comments?.map((c: any) => ({
-                          ...c,
-                          createdAt: new Date(c.createdAt)
-                        })) || []
-                      }));
-                      
-                      // 복원 버튼은 현재 Supabase 기반으로 동작하므로 제거하거나 다른 방식으로 처리
-                      toast({
-                        title: `${formattedPrompts.length}개의 프롬프트를 복원했습니다!`,
-                        description: "수동 복원이 완료되었습니다."
-                      });
-                    } else {
-                      toast({
-                        title: "복원할 프롬프트를 찾을 수 없습니다.",
-                        variant: "destructive"
-                      });
-                    }
-                  } else {
-                    toast({
-                      title: "localStorage에서 데이터를 찾을 수 없습니다.",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                className="text-xs"
-              >
-                🔄 프롬프트 복원
-              </Button>
-              
-              {currentUser && (
-                <div className="flex gap-2">
-                  <Button
-                    variant={viewFilter === '내 프롬프트' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewFilter(viewFilter === '내 프롬프트' ? '전체' : '내 프롬프트')}
-                    className="flex-1"
-                  >
-                    📝 내 프롬프트
-                  </Button>
-                  <Button
-                    variant={viewFilter === '좋아요한 프롬프트' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewFilter(viewFilter === '좋아요한 프롬프트' ? '전체' : '좋아요한 프롬프트')}
-                    className="flex-1"
-                  >
-                    ❤️ 좋아요한 프롬프트
-                  </Button>
-                </div>
-              )}
             </div>
+          </div>
+
+          {/* 필터 및 정렬 섹션 */}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <Select onValueChange={setSortBy} defaultValue="좋아요순">
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="📈 정렬 기준" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="좋아요순">👍 좋아요순</SelectItem>
+                <SelectItem value="생성일순">🕐 생성일순</SelectItem>
+                <SelectItem value="조회수순">👁️ 조회수순</SelectItem>
+                <SelectItem value="복사순">📋 복사순</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select onValueChange={value => setSelectedType(value === "모든 타입" ? null : value)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="🏷️ 타입 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="모든 타입">모든 타입</SelectItem>
+                <SelectItem value="문서 작성">문서 작성</SelectItem>
+                <SelectItem value="요약/정리">요약/정리</SelectItem>
+                <SelectItem value="번역">번역</SelectItem>
+                <SelectItem value="검토/리뷰">검토/리뷰</SelectItem>
+                <SelectItem value="자동화">자동화</SelectItem>
+                <SelectItem value="질문/응답">질문/응답</SelectItem>
+                <SelectItem value="양식화">양식화</SelectItem>
+                <SelectItem value="분류/분석">분류/분석</SelectItem>
+                <SelectItem value="아이디어">아이디어</SelectItem>
+                <SelectItem value="코드 생성/리뷰">코드 생성/리뷰</SelectItem>
+                <SelectItem value="기타">기타</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select onValueChange={value => setSelectedTool(value === "모든 Tool" ? null : value)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="🛠️ Tool 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="모든 Tool">모든 Tool</SelectItem>
+                <SelectItem value="엘지니 AI">엘지니 AI</SelectItem>
+                <SelectItem value="Chat EXAONE">Chat EXAONE</SelectItem>
+                <SelectItem value="CHATDA">CHATDA</SelectItem>
+                <SelectItem value="METIS">METIS</SelectItem>
+                <SelectItem value="MS Copilot">MS Copilot</SelectItem>
+                <SelectItem value="외부 Tool (ChatGPT, Claude, Gemini 등)">외부 Tool</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -554,7 +443,6 @@ const Index = () => {
               onEdit={handleEditPrompt}
               onDelete={handleDeletePrompt}
               isAdmin={isAdmin}
-              currentUser={currentUser}
               likedPrompts={likedPrompts}
             />
           ))}
@@ -563,10 +451,10 @@ const Index = () => {
         {filteredAndSortedPrompts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 dark:text-gray-400 text-lg">
-                😔 {viewFilter === '내 프롬프트' ? '등록한 프롬프트가' : viewFilter === '좋아요한 프롬프트' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
+                😔 검색 결과가 없습니다.
               </p>
               <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                {viewFilter === '내 프롬프트' ? '새 프롬프트를 등록해보세요.' : viewFilter === '좋아요한 프롬프트' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
+                다른 검색어를 사용하거나 필터를 조정해보세요.
               </p>
             </div>
         )}
@@ -599,7 +487,7 @@ const Index = () => {
         onEdit={handleEditPrompt}
         onDelete={handleDeletePrompt}
         isAdmin={isAdmin}
-        currentUser={currentUser}
+        
         likedPrompts={likedPrompts}
       />
 
@@ -611,11 +499,6 @@ const Index = () => {
         description={passwordDialog.description}
       />
 
-      <LoginDialog
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLogin={handleLogin}
-      />
     </div>
   );
 };
