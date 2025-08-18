@@ -284,18 +284,25 @@ export const usePrompts = () => {
   // 조회수 증가
   const incrementViews = async (id: string) => {
     try {
-      const prompt = prompts.find(p => p.id === id)
-      if (!prompt) return
+      // 현재 데이터베이스에서 최신 값을 가져와서 증가
+      const { data: currentPrompt, error: fetchError } = await supabase
+        .from('prompts')
+        .select('views')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) throw fetchError
 
       const { error } = await supabase
         .from('prompts')
-        .update({ views: prompt.views + 1 })
+        .update({ views: currentPrompt.views + 1 })
         .eq('id', id)
 
       if (error) throw error
 
+      // 로컬 상태도 업데이트
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, views: p.views + 1 } : p
+        p.id === id ? { ...p, views: currentPrompt.views + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing views:', error)
@@ -305,18 +312,25 @@ export const usePrompts = () => {
   // 복사수 증가
   const incrementCopyCount = async (id: string) => {
     try {
-      const prompt = prompts.find(p => p.id === id)
-      if (!prompt) return
+      // 현재 데이터베이스에서 최신 값을 가져와서 증가
+      const { data: currentPrompt, error: fetchError } = await supabase
+        .from('prompts')
+        .select('copy_count')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) throw fetchError
 
       const { error } = await supabase
         .from('prompts')
-        .update({ copy_count: prompt.copyCount + 1 })
+        .update({ copy_count: currentPrompt.copy_count + 1 })
         .eq('id', id)
 
       if (error) throw error
 
+      // 로컬 상태도 업데이트
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, copyCount: p.copyCount + 1 } : p
+        p.id === id ? { ...p, copyCount: currentPrompt.copy_count + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing copy count:', error)
@@ -326,10 +340,16 @@ export const usePrompts = () => {
   // 좋아요 토글
   const toggleLike = async (id: string, increment: boolean) => {
     try {
-      const prompt = prompts.find(p => p.id === id)
-      if (!prompt) return
+      // 현재 데이터베이스에서 최신 값을 가져와서 증가/감소
+      const { data: currentPrompt, error: fetchError } = await supabase
+        .from('prompts')
+        .select('likes')
+        .eq('id', id)
+        .single()
 
-      const newLikes = increment ? prompt.likes + 1 : Math.max(0, prompt.likes - 1)
+      if (fetchError) throw fetchError
+
+      const newLikes = increment ? currentPrompt.likes + 1 : Math.max(0, currentPrompt.likes - 1)
 
       const { error } = await supabase
         .from('prompts')
@@ -338,6 +358,7 @@ export const usePrompts = () => {
 
       if (error) throw error
 
+      // 로컬 상태도 업데이트
       setPrompts(prev => prev.map(p => 
         p.id === id 
           ? { ...p, likes: newLikes }
