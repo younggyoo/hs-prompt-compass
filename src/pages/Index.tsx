@@ -6,13 +6,11 @@ import VisitorCounter from "@/components/VisitorCounter";
 import AdminMode from "@/components/AdminMode";
 import PasswordDialog from "@/components/PasswordDialog";
 import LoginDialog from "@/components/LoginDialog";
-import { AppSidebar } from "@/components/AppSidebar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePrompts } from "@/hooks/usePrompts";
 import { User, Heart, FileText, LogOut } from "lucide-react";
@@ -329,66 +327,50 @@ const Index = () => {
     });
 
   return (
-    <>
-      <AppSidebar 
-        currentUser={currentUser}
-        viewFilter={viewFilter}
-        onViewFilterChange={setViewFilter}
-        onLoginClick={() => setIsLoginOpen(true)}
-      />
-      
-      <main className="flex-1 min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 z-10">
-          <div className="container mx-auto p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="lg:hidden" />
-                
-                <div className="flex items-center gap-4">
-                  {currentUser ? (
-                    <div className="flex items-center gap-2">
-                      <User className="w-5 h-5 text-[#A50034]" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {currentUser}님
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleLogout}
-                        className="text-gray-500 hover:text-red-500"
-                      >
-                        <LogOut className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsLoginOpen(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <User className="w-4 h-4" />
-                      로그인
-                    </Button>
-                  )}
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <header className="container mx-auto p-4">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-[#A50034]" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {currentUser}님
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               </div>
-              <VisitorCounter />
-            </div>
-            
-            <div className="text-center mt-4">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                🏢 HS본부 프롬프트 라이브러리
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-2 max-w-2xl mx-auto">
-                💡 업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
-                ✨ 검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
-              </p>
-            </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLoginOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                로그인
+              </Button>
+            )}
           </div>
-        </header>
+          <VisitorCounter />
+        </div>
+        
+        <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mt-4">
+          🏢 HS본부 프롬프트 라이브러리
+        </h1>
+        <p className="text-center text-gray-600 dark:text-gray-300 mt-2 max-w-2xl mx-auto">
+          💡 업무에 바로 사용 가능한 프롬프트를 검색하고 복사하여 빠르고 쉽게 사용하세요,<br />
+          ✨ 검증된 프롬프트를 찾아보고, 자신의 프롬프트도 공유해 보세요.
+        </p>
+      </header>
       
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-6 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex flex-col md:flex-row items-center gap-4 flex-1">
@@ -607,23 +589,22 @@ const Index = () => {
           ))}
         </div>
 
-          {filteredAndSortedPrompts.length === 0 && (
-            <div className="text-center mt-8">
-              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                😔 {viewFilter === 'my' ? '등록한 프롬프트가' : viewFilter === 'liked' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">
-                {viewFilter === 'my' ? '새 프롬프트를 등록해보세요.' : viewFilter === 'liked' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* 관리자 모드 버튼을 하단에 배치 */}
-        <div className="fixed bottom-4 left-4">
-          <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} prompts={prompts} />
-        </div>
+        {filteredAndSortedPrompts.length === 0 && (
+          <div className="text-center mt-8">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              😔 {viewFilter === 'my' ? '등록한 프롬프트가' : viewFilter === 'liked' ? '좋아요한 프롬프트가' : '검색 결과가'} 없습니다.
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
+              {viewFilter === 'my' ? '새 프롬프트를 등록해보세요.' : viewFilter === 'liked' ? '마음에 드는 프롬프트에 좋아요를 눌러보세요.' : '다른 검색어를 사용하거나 필터를 조정해보세요.'}
+            </p>
+          </div>
+        )}
       </main>
+
+      {/* 관리자 모드 버튼을 하단에 배치 */}
+      <div className="fixed bottom-4 left-4">
+        <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} prompts={prompts} />
+      </div>
 
       <PromptRegistration
         isOpen={isRegistrationOpen}
@@ -664,7 +645,7 @@ const Index = () => {
         onClose={() => setIsLoginOpen(false)}
         onLogin={handleLogin}
       />
-    </>
+    </div>
   );
 };
 
