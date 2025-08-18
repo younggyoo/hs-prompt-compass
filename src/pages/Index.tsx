@@ -78,26 +78,45 @@ const Index = () => {
 
   // 로컬 스토리지에서 프롬프트 불러오기 (사용자 생성 프롬프트만)
   const [prompts, setPrompts] = useState<Prompt[]>(() => {
-    const savedPrompts = localStorage.getItem('hs-prompts');
-    if (savedPrompts) {
-      try {
-        const parsed = JSON.parse(savedPrompts);
-        const userPrompts = parsed.filter((p: any) => 
-          !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
-          parseInt(p.id) > 20
-        );
-        return userPrompts.map((p: any) => ({
-          ...p,
-          copyCount: p.copyCount || 0,
-          createdAt: new Date(p.createdAt),
-          comments: p.comments?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt)
-          })) || []
-        }));
-      } catch (error) {
-        console.error('Failed to parse saved prompts:', error);
+    // 다양한 키에서 프롬프트 복원 시도
+    const possibleKeys = ['hs-prompts', 'hs-user-prompts', 'hs-user-prompts-v2'];
+    let allPrompts: any[] = [];
+    
+    for (const key of possibleKeys) {
+      const savedPrompts = localStorage.getItem(key);
+      if (savedPrompts) {
+        try {
+          const parsed = JSON.parse(savedPrompts);
+          if (Array.isArray(parsed)) {
+            allPrompts = [...allPrompts, ...parsed];
+          }
+        } catch (error) {
+          console.error(`Failed to parse saved prompts from ${key}:`, error);
+        }
       }
+    }
+    
+    if (allPrompts.length > 0) {
+      // 중복 제거 (ID 기준)
+      const uniquePrompts = allPrompts.filter((prompt, index, arr) => 
+        arr.findIndex(p => p.id === prompt.id) === index
+      );
+      
+      // 기본 예시 프롬프트 필터링
+      const userPrompts = uniquePrompts.filter((p: any) => 
+        !['김기획', '이R&D', '박기획', '최생산', '김영업', '이공통', '박품질', '정공통', '한번역', '차R&D', '김프로젝트', '이구매', '박SCM', '정품질', '신안전', '강교육', '조환경', '윤법무', '장IT', '고HR'].includes(p.author) &&
+        parseInt(p.id) > 20
+      );
+      
+      return userPrompts.map((p: any) => ({
+        ...p,
+        copyCount: p.copyCount || 0,
+        createdAt: new Date(p.createdAt),
+        comments: p.comments?.map((c: any) => ({
+          ...c,
+          createdAt: new Date(c.createdAt)
+        })) || []
+      }));
     }
     
     // 사용자 프롬프트가 없으면 빈 배열 반환 (기본 예시 프롬프트 제거)
