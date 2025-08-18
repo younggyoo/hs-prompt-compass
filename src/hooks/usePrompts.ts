@@ -294,41 +294,59 @@ export const usePrompts = () => {
         return
       }
 
-      // 원자적 증가를 위해 edge function 사용
-      const { data, error } = await supabase.functions.invoke('increment-counters', {
-        body: { id, field: 'views', increment: 1 }
+      // 직접 RPC 호출로 변경 (edge function 대신)
+      const { data, error } = await supabase.rpc('increment_prompt_counter', {
+        prompt_id: id,
+        counter_field: 'views',
+        increment_value: 1
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
 
       // 조회 시간 기록
       localStorage.setItem(viewedKey, now.toString())
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 (DB에서 반환된 새 값 사용)
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, views: p.views + 1 } : p
+        p.id === id ? { ...p, views: data[0]?.new_value || p.views + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing views:', error)
+      toast({
+        title: "조회수 업데이트에 실패했습니다.",
+        variant: "destructive",
+      })
     }
   }
 
   // 복사수 증가
   const incrementCopyCount = async (id: string) => {
     try {
-      // 원자적 증가를 위해 edge function 사용
-      const { data, error } = await supabase.functions.invoke('increment-counters', {
-        body: { id, field: 'copy_count', increment: 1 }
+      // 직접 RPC 호출로 변경 (edge function 대신)
+      const { data, error } = await supabase.rpc('increment_prompt_counter', {
+        prompt_id: id,
+        counter_field: 'copy_count',
+        increment_value: 1
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 (DB에서 반환된 새 값 사용)
       setPrompts(prev => prev.map(p => 
-        p.id === id ? { ...p, copyCount: p.copyCount + 1 } : p
+        p.id === id ? { ...p, copyCount: data[0]?.new_value || p.copyCount + 1 } : p
       ))
     } catch (error) {
       console.error('Error incrementing copy count:', error)
+      toast({
+        title: "복사수 업데이트에 실패했습니다.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -345,24 +363,33 @@ export const usePrompts = () => {
       
       const increment = isCurrentlyLiked ? -1 : 1
       
-      // 원자적 증가/감소를 위해 edge function 사용
-      const { data, error } = await supabase.functions.invoke('increment-counters', {
-        body: { id, field: 'likes', increment }
+      // 직접 RPC 호출로 변경 (edge function 대신)
+      const { data, error } = await supabase.rpc('increment_prompt_counter', {
+        prompt_id: id,
+        counter_field: 'likes',
+        increment_value: increment
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
 
       // localStorage 상태 업데이트
       localStorage.setItem(likedKey, (!isCurrentlyLiked).toString())
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 (DB에서 반환된 새 값 사용)
       setPrompts(prev => prev.map(p => 
         p.id === id 
-          ? { ...p, likes: p.likes + increment }
+          ? { ...p, likes: data[0]?.new_value || p.likes + increment }
           : p
       ))
     } catch (error) {
       console.error('Error toggling like:', error)
+      toast({
+        title: "좋아요 업데이트에 실패했습니다.",
+        variant: "destructive",
+      })
     }
   }
 
