@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, TrendingUp, Eye, Copy, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Comment {
   id: string;
@@ -37,39 +38,43 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
-  const [dailyVisitors, setDailyVisitors] = useState<{ [key: string]: number }>({});
-  const [monthlyVisitors, setMonthlyVisitors] = useState<{ [key: string]: number }>({});
+  const [dailyVisitors, setDailyVisitors] = useState<{ visit_date: string; visit_count: number }[]>([]);
+  const [monthlyVisitors, setMonthlyVisitors] = useState<{ visit_month: string; visit_count: number }[]>([]);
+  const [todayVisitors, setTodayVisitors] = useState<number>(0);
 
   useEffect(() => {
-    // 일별 방문자 수 계산
-    const daily: { [key: string]: number } = {};
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateKey = date.toDateString();
-      daily[dateKey] = parseInt(localStorage.getItem(`visitors_${dateKey}`) || '0');
-    }
-    setDailyVisitors(daily);
+    const fetchVisitorData = async () => {
+      try {
+        // 오늘 방문자 수 조회
+        const { data: todayData } = await supabase.rpc('get_daily_visitors');
+        setTodayVisitors(todayData || 0);
 
-    // 월별 방문자 수 계산 (최근 6개월)
-    const monthly: { [key: string]: number } = {};
-    for (let i = 0; i < 6; i++) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      // 해당 월의 일별 방문자 수 합산
-      let monthlyTotal = 0;
-      const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dayDate = new Date(date.getFullYear(), date.getMonth(), day);
-        const dayKey = dayDate.toDateString();
-        monthlyTotal += parseInt(localStorage.getItem(`visitors_${dayKey}`) || '0');
+        // 최근 7일 방문자 수 조회
+        const { data: weeklyData, error: weeklyError } = await supabase.rpc('get_weekly_visitors');
+        if (!weeklyError && weeklyData) {
+          setDailyVisitors(weeklyData.map((item: any) => ({
+            visit_date: item.visit_date,
+            visit_count: item.visit_count
+          })));
+        }
+
+        // 최근 6개월 방문자 수 조회
+        const { data: monthlyData, error: monthlyError } = await supabase.rpc('get_monthly_visitors');
+        if (!monthlyError && monthlyData) {
+          setMonthlyVisitors(monthlyData.map((item: any) => ({
+            visit_month: item.visit_month,
+            visit_count: parseInt(item.visit_count)
+          })));
+        }
+      } catch (error) {
+        console.error('방문자 데이터 조회 실패:', error);
       }
-      monthly[monthKey] = monthlyTotal;
+    };
+
+    if (isAdmin) {
+      fetchVisitorData();
     }
-    setMonthlyVisitors(monthly);
-  }, []);
+  }, [isAdmin]);
 
   const totalPrompts = prompts.length;
   const totalViews = prompts.reduce((sum, prompt) => sum + prompt.views, 0);
@@ -109,7 +114,15 @@ const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
         
         <div className="space-y-6">
           {/* 전체 통계 */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-gray-600">오늘 방문자</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-[#A50034]">{todayVisitors}명</div>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-gray-600">총 프롬프트</CardTitle>
@@ -160,14 +173,14 @@ const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(dailyVisitors)
-                    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-                    .map(([date, count]) => (
-                      <div key={date} className="flex justify-between items-center">
+                  {dailyVisitors
+                    .sort((a, b) => new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime())
+                    .map((item) => (
+                      <div key={item.visit_date} className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          {new Date(date).toLocaleDateString('ko-KR')}
+                          {new Date(item.visit_date).toLocaleDateString('ko-KR')}
                         </span>
-                        <span className="font-semibold text-[#A50034]">{count}명</span>
+                        <span className="font-semibold text-[#A50034]">{item.visit_count}명</span>
                       </div>
                     ))}
                 </div>
@@ -180,12 +193,12 @@ const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(monthlyVisitors)
-                    .sort(([a], [b]) => b.localeCompare(a))
-                    .map(([month, count]) => (
-                      <div key={month} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{month}</span>
-                        <span className="font-semibold text-[#A50034]">{count}명</span>
+                  {monthlyVisitors
+                    .sort((a, b) => b.visit_month.localeCompare(a.visit_month))
+                    .map((item) => (
+                      <div key={item.visit_month} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">{item.visit_month}</span>
+                        <span className="font-semibold text-[#A50034]">{item.visit_count}명</span>
                       </div>
                     ))}
                 </div>
