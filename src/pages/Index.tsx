@@ -307,7 +307,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <header className="container mx-auto p-4">
         <div className="flex items-start justify-between mb-4">
-          <VisitorCounter />
+          <div className="hidden">
+            <VisitorCounter />
+          </div>
         </div>
         
         <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mt-4">
