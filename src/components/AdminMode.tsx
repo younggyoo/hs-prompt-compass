@@ -33,10 +33,11 @@ interface AdminModeProps {
   isAdmin: boolean;
   onAdminToggle: (isAdmin: boolean) => void;
   prompts: Prompt[];
+  onAdminStatusChange: (isAdmin: boolean) => void;
 }
 
-const AdminMode = ({ prompts }: AdminModeProps) => {
-  return <AdminAuth prompts={prompts} />;
+const AdminMode = ({ prompts, onAdminStatusChange }: AdminModeProps) => {
+  return <AdminAuth prompts={prompts} onAdminStatusChange={onAdminStatusChange} />;
 };
 
 export default AdminMode;

@@ -35,9 +35,10 @@ interface Prompt {
 
 interface AdminAuthProps {
   prompts: Prompt[];
+  onAdminStatusChange: (isAdmin: boolean) => void;
 }
 
-const AdminAuth = ({ prompts }: AdminAuthProps) => {
+const AdminAuth = ({ prompts, onAdminStatusChange }: AdminAuthProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState('');
@@ -64,6 +65,7 @@ const AdminAuth = ({ prompts }: AdminAuthProps) => {
           checkAdminStatus(session.user.id);
         } else {
           setIsAdmin(false);
+          onAdminStatusChange(false);
         }
       }
     );
@@ -84,7 +86,9 @@ const AdminAuth = ({ prompts }: AdminAuthProps) => {
         return;
       }
 
-      setIsAdmin(data?.is_admin || false);
+      const adminStatus = data?.is_admin || false;
+      setIsAdmin(adminStatus);
+      onAdminStatusChange(adminStatus);
     } catch (error) {
       console.error('Error checking admin status:', error);
     }
@@ -191,6 +195,7 @@ const AdminAuth = ({ prompts }: AdminAuthProps) => {
         });
       } else {
         setIsAdmin(true);
+        onAdminStatusChange(true);
         toast({
           title: "관리자 권한 설정",
           description: "관리자 권한이 설정되었습니다.",

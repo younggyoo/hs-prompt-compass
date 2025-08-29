@@ -459,7 +459,12 @@ const Index = () => {
 
       {/* 관리자 인증 컴포넌트를 하단에 배치 */}
       <div className="fixed bottom-4 left-4">
-        <AdminMode isAdmin={isAdmin} onAdminToggle={setIsAdmin} prompts={prompts} />
+        <AdminMode 
+          isAdmin={isAdmin} 
+          onAdminToggle={setIsAdmin} 
+          prompts={prompts} 
+          onAdminStatusChange={setIsAdmin}
+        />
       </div>
 
       <PromptRegistration
