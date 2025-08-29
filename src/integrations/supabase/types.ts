@@ -171,6 +171,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_monthly_daily_visitors: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          visit_count: number
+          visit_date: string
+        }[]
+      }
       get_monthly_visitors: {
         Args: Record<PropertyKey, never>
         Returns: {

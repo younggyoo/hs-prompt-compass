@@ -49,10 +49,10 @@ const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
         const { data: todayData } = await supabase.rpc('get_daily_visitors');
         setTodayVisitors(todayData || 0);
 
-        // 최근 7일 방문자 수 조회
-        const { data: weeklyData, error: weeklyError } = await supabase.rpc('get_weekly_visitors');
-        if (!weeklyError && weeklyData) {
-          setDailyVisitors(weeklyData.map((item: any) => ({
+        // 최근 30일 방문자 수 조회
+        const { data: monthlyDailyData, error: monthlyDailyError } = await supabase.rpc('get_monthly_daily_visitors');
+        if (!monthlyDailyError && monthlyDailyData) {
+          setDailyVisitors(monthlyDailyData.map((item: any) => ({
             visit_date: item.visit_date,
             visit_count: item.visit_count
           })));
@@ -169,7 +169,7 @@ const AdminDashboard = ({ prompts, isAdmin }: AdminDashboardProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">📅 일별 방문자 (최근 7일)</CardTitle>
+                <CardTitle className="text-lg">📅 일별 방문자 (최근 30일)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
